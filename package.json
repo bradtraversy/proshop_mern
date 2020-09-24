@@ -13,8 +13,10 @@
   "author": "Brad Traversy",
   "license": "MIT",
   "dependencies": {
+    "colors": "^1.4.0",
     "dotenv": "^8.2.0",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "mongoose": "^5.10.6"
   },
   "devDependencies": {
     "concurrently": "^5.3.0",
