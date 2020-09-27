@@ -21,7 +21,8 @@
     "express": "^4.17.1",
     "express-async-handler": "^1.1.4",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.10.6"
+    "mongoose": "^5.10.6",
+    "multer": "^1.4.2"
   },
   "devDependencies": {
     "concurrently": "^5.3.0",
