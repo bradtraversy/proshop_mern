@@ -74,7 +74,7 @@ There is a Heroku postbuild script, so if you push to Heroku, no need to build m
 
 ### Seed Database
 
-You can use the following commands to seed the database with some sample users and products as well as destroy all data
+You can use the following commands to seed the database with some sample users and products as well as destroy all data.
 
 ```
 # Import data
