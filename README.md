@@ -36,6 +36,11 @@ JWT_SECRET = 'abc123'
 PAYPAL_CLIENT_ID = your paypal client id
 ```
 
+### Note:
+- For dev use Babel cli config (installed as dev dependencies) to be able to read import statements in the backend (So you are able to use ES6 features like import and export syntax)
+- More information here for why we use babel to read ES6 syntax is [here](https://medium.com/@JedaiSaboteur/import-export-babel-and-node-a2e332d15673).
+- Node seeder file also uses an object spread syntax: this Babel plugin is used to solved that: [babel-plugin-transform-object-rest-spread](https://www.npmjs.com/package/babel-plugin-transform-object-rest-spread)
+
 ### Install Dependencies (frontend & backend)
 
 ```
