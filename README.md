@@ -22,6 +22,9 @@ This is the course project for my [MERN eCommerce From Scratch](https://www.udem
 - PayPal / credit card integration
 - Database seeder (products & users)
 
+## Note on Issues
+Please do not post issues here that are related to your own code when taking the course. Add those in the Udemy Q/A. If you clone THIS repo and there are issues, then you can submit
+
 ## Usage
 
 ### ES Modules in Node
@@ -96,6 +99,7 @@ john@example.com (Customer)
 jane@example.com (Customer)
 123456
 ```
+
 
 ## License
 
