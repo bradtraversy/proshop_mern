@@ -40,7 +40,14 @@ h2 {
   padding: 30px;
   margin: 40px;
   border-radius: 50%;
+  margin-left: auto;
+  margin-right: auto;
 }
 .carousel a {
   margin: 0 auto;
+}
+@media (max-width: 900px) {
+  .carousel-caption h2 {
+    font-size: 2.5vw;
+  }
 }
