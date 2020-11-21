@@ -77,18 +77,19 @@ const ProductEditScreen = ({ match, history }) => {
 
   const submitHandler = (e) => {
     e.preventDefault()
-    dispatch(
-      updateProduct({
-        _id: productId,
-        name,
-        price,
-        image,
-        brand,
-        category,
-        description,
-        countInStock,
-      })
-    )
+    if(countInStock >= 0){
+      dispatch(
+        updateProduct({
+          _id: productId,
+          name,
+          price,
+          image,
+          brand,
+          category,
+          description,
+          countInStock,
+        })
+    )}
   }
 
   return (
@@ -161,6 +162,7 @@ const ProductEditScreen = ({ match, history }) => {
                 value={countInStock}
                 onChange={(e) => setCountInStock(e.target.value)}
               ></Form.Control>
+              { countInStock<0 && <i style={{float:"right", color:"red"}}>Please enter a valid Stock Count</i>}
             </Form.Group>
 
             <Form.Group controlId='category'>
