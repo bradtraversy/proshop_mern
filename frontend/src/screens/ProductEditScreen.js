@@ -26,6 +26,9 @@ const ProductEditScreen = ({ match, history }) => {
   const productDetails = useSelector((state) => state.productDetails)
   const { loading, error, product } = productDetails
 
+  const userLogin = useSelector((state) => state.userLogin)
+  const { userInfo } = userLogin
+
   const productUpdate = useSelector((state) => state.productUpdate)
   const {
     loading: loadingUpdate,
@@ -58,10 +61,13 @@ const ProductEditScreen = ({ match, history }) => {
     formData.append('image', file)
     setUploading(true)
 
+    const token = userInfo && userInfo.token
+
     try {
       const config = {
         headers: {
           'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
         },
       }
 
