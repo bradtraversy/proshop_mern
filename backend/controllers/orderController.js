@@ -46,8 +46,12 @@ const getOrderById = asyncHandler(async (req, res) => {
     'name email'
   )
 
-  if (order) {
+  if (
+    order &&
+    (req.user.isAdmin || req.user._id.toString() === order.user._id.toString())
+  ) {
     res.json(order)
+    return
   } else {
     res.status(404)
     throw new Error('Order not found')
