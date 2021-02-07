@@ -21,6 +21,6 @@ router
   .delete(protect, admin, deleteProduct)
   .put(protect, admin, updateProduct)
 router.route('/:id/updatestock').put(protect, updateProductStock)
-router.route('/:id/stock').put(protect, updateProductStock);
+router.route('/:id/stock').put(protect, updateProductStock)
 
 export default router

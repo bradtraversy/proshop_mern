@@ -193,29 +193,29 @@ export const updateProductStock = (product) => async (dispatch, getState) => {
   try {
     dispatch({
       type: PRODUCT_UPDATE_STOCK_REQUEST,
-    });
+    })
 
     const {
       userLogin: { userInfo },
-    } = getState();
+    } = getState()
 
     const config = {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${userInfo.token}`,
       },
-    };
+    }
 
     const { data } = await axios.put(
       `/api/products/${product._id}/stock`,
       product,
       config
-    );
+    )
 
     dispatch({
       type: PRODUCT_UPDATE_STOCK_SUCCESS,
       payload: data,
-    });
+    })
   } catch (error) {
     dispatch({
       type: PRODUCT_UPDATE_STOCK_FAIL,
@@ -223,9 +223,9 @@ export const updateProductStock = (product) => async (dispatch, getState) => {
         error.response && error.response.data.message
           ? error.response.data.message
           : error.message,
-    });
+    })
   }
-};
+}
 
 export const createProductReview = (productId, review) => async (
   dispatch,
