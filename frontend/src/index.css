@@ -26,28 +26,49 @@ h2 {
 .carousel-item.active {
   display: flex;
 }
-.carousel-caption {
-  position: absolute;
-  top: 0;
-}
 
 .carousel-caption h2 {
-  color: #fff;
+  color: rgb(0, 0, 0);
+  background: rgba(255, 255, 255, 0.842);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 10px;
+  padding: 15px;
 }
 
-.carousel img {
-  height: 300px;
-  padding: 30px;
-  margin: 40px;
-  border-radius: 50%;
-  margin-left: auto;
-  margin-right: auto;
-}
 .carousel a {
   margin: 0 auto;
 }
-@media (max-width: 900px) {
+
+@media (max-width: 1000px) {
   .carousel-caption h2 {
-    font-size: 2.5vw;
+    padding: 10px;
+    font-size: 15px;
+  }
+  .orderid {
+    font-size: medium;
+  }
+
+  .srch{
+    width: 100%;
+    margin-top: 3%;
+    margin-bottom: 6%;
+  }
+
+  .titprd{
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom:-5px;
+  }
+
+  .srchfld{
+    width: 100%;
+    margin-top: 10px;
+  }
+
+}
+@media (max-width: 600px) {
+  .carousel-caption {
+    font-size: 2px;
   }
 }

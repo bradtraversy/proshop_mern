@@ -1,7 +1,7 @@
 {
-  "name": "proshop",
+  "name": "creative-duo-shop",
   "version": "1.0.0",
-  "description": "MERN shopping cart app",
+  "description": "Shop Application",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -17,14 +17,17 @@
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.25.0",
+    "cloudinary-core": "^2.11.3",
     "colors": "^1.4.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-async-handler": "^1.1.4",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.10.6",
+    "mongoose": "^5.12.1",
     "morgan": "^1.10.0",
-    "multer": "^1.4.2"
+    "multer": "^1.4.2",
+    "multer-storage-cloudinary": "^4.0.0"
   },
   "devDependencies": {
     "concurrently": "^5.3.0",

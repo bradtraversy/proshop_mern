@@ -13,6 +13,7 @@ const orderSchema = mongoose.Schema(
         qty: { type: Number, required: true },
         image: { type: String, required: true },
         price: { type: Number, required: true },
+        countInStock: { type: Number, required: true },
         product: {
           type: mongoose.Schema.Types.ObjectId,
           required: true,
@@ -36,12 +37,7 @@ const orderSchema = mongoose.Schema(
       update_time: { type: String },
       email_address: { type: String },
     },
-    taxPrice: {
-      type: Number,
-      required: true,
-      default: 0.0,
-    },
-    shippingPrice: {
+    feePrice: {
       type: Number,
       required: true,
       default: 0.0,
@@ -66,6 +62,18 @@ const orderSchema = mongoose.Schema(
     },
     deliveredAt: {
       type: Date,
+    },
+    cdnURL: {
+      type:String,
+    },
+    emailNotifier: {
+      type: String,
+    },
+    couponCode: {
+      type: String,
+    },
+    orderStatus: {
+      type: String,
     },
   },
   {

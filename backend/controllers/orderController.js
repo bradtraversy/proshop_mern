@@ -10,8 +10,7 @@ const addOrderItems = asyncHandler(async (req, res) => {
     shippingAddress,
     paymentMethod,
     itemsPrice,
-    taxPrice,
-    shippingPrice,
+    feePrice,
     totalPrice,
   } = req.body
 
@@ -26,8 +25,7 @@ const addOrderItems = asyncHandler(async (req, res) => {
       shippingAddress,
       paymentMethod,
       itemsPrice,
-      taxPrice,
-      shippingPrice,
+      feePrice,
       totalPrice,
     })
 
@@ -46,8 +44,12 @@ const getOrderById = asyncHandler(async (req, res) => {
     'name email'
   )
 
-  if (order) {
+  if (
+    order &&
+    (req.user.isAdmin || req.user._id.toString() === order.user._id.toString())
+  ) {
     res.json(order)
+    return
   } else {
     res.status(404)
     throw new Error('Order not found')
@@ -67,7 +69,7 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
       id: req.body.id,
       status: req.body.status,
       update_time: req.body.update_time,
-      email_address: req.body.payer.email_address,
+      // email_address: req.body.payer.email_address,
     }
 
     const updatedOrder = await order.save()
@@ -98,6 +100,24 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
   }
 })
 
+// @desc    Update order to status
+// @route   GET /api/orders/:id/status
+// @access  Private/Admin
+
+const updateOrderStatus = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id)
+
+  if (order) {
+    order.isPaid = true
+    const updatedOrder = await order.save()
+
+    res.json(updatedOrder)
+  } else {
+    res.status(404)
+    throw new Error("Order could not be updated or found")
+  }
+})
+
 // @desc    Get logged in user orders
 // @route   GET /api/orders/myorders
 // @access  Private
@@ -114,11 +134,29 @@ const getOrders = asyncHandler(async (req, res) => {
   res.json(orders)
 })
 
+
+// @desc    Delete order
+// @route   DELETE /api/order/:id
+// @access  Private/Admin
+const deleteOrder = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
+
+  if (order) {
+    await order.remove();
+    res.json({ message: "Order Has Been Deleted From Database" });
+  } else {
+    res.status(404);
+    throw new Error("Order Not Found (ERROR)");
+  }
+});
+
 export {
   addOrderItems,
   getOrderById,
   updateOrderToPaid,
   updateOrderToDelivered,
   getMyOrders,
+  updateOrderStatus,
   getOrders,
+  deleteOrder
 }

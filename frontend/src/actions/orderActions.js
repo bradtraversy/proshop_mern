@@ -19,6 +19,12 @@ import {
   ORDER_DELIVER_FAIL,
   ORDER_DELIVER_SUCCESS,
   ORDER_DELIVER_REQUEST,
+  ORDER_STATUS_FAIL,
+  ORDER_STATUS_REQUEST,
+  ORDER_DELETE_FAIL,
+  ORDER_DELETE_SUCCESS,
+  ORDER_DELETE_REQUEST,
+  ORDER_STATUS_SUCCESS,
 } from '../constants/orderConstants'
 import { logout } from './userActions'
 
@@ -60,6 +66,40 @@ export const createOrder = (order) => async (dispatch, getState) => {
     }
     dispatch({
       type: ORDER_CREATE_FAIL,
+      payload: message,
+    })
+  }
+}
+
+export const deleteOrder = (id) => async (dispatch, getState) => {
+  try {
+    dispatch({
+      type: ORDER_DELETE_REQUEST,
+    })
+
+    const {
+      userLogin: { userInfo },
+    } = getState()
+
+    const config = {
+      headers: {
+        Authorization: `Bearer ${userInfo.token}`,
+      },
+    }
+
+    await axios.delete(`/api/orders/${id}`, config)
+
+    dispatch({ type: ORDER_DELETE_SUCCESS })
+  } catch (error) {
+    const message =
+      error.response && error.response.data.message
+        ? error.response.data.message
+        : error.message
+    if (message === 'Not authorized, token failed') {
+      dispatch(logout())
+    }
+    dispatch({
+      type: ORDER_DELETE_FAIL,
       payload: message,
     })
   }
@@ -183,6 +223,47 @@ export const deliverOrder = (order) => async (dispatch, getState) => {
     }
     dispatch({
       type: ORDER_DELIVER_FAIL,
+      payload: message,
+    })
+  }
+}
+
+export const orderStatus = (order) => async (dispatch, getState) => {
+  try {
+    dispatch({
+      type: ORDER_STATUS_REQUEST,
+    })
+
+    const {
+      userLogin: { userInfo },
+    } = getState()
+
+    const config = {
+      headers: {
+        Authorization: `Bearer ${userInfo.token}`,
+      },
+    }
+
+    const { data } = await axios.put(
+      `/api/orders/${order._id}/orderstatus`,
+      {},
+      config
+    )
+
+    dispatch({
+      type: ORDER_STATUS_SUCCESS,
+      payload: data,
+    })
+  } catch (error) {
+    const message =
+      error.response && error.response.data.message
+        ? error.response.data.message
+        : error.message
+    if (message === 'Not authorized, token failed') {
+      dispatch(logout())
+    }
+    dispatch({
+      type: ORDER_STATUS_FAIL,
       payload: message,
     })
   }

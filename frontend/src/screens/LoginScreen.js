@@ -55,7 +55,7 @@ const LoginScreen = ({ location, history }) => {
           ></Form.Control>
         </Form.Group>
 
-        <Button type='submit' variant='primary'>
+        <Button type='submit' className="btn btn-block" variant='primary'>
           Sign In
         </Button>
       </Form>
@@ -66,6 +66,10 @@ const LoginScreen = ({ location, history }) => {
           <Link to={redirect ? `/register?redirect=${redirect}` : '/register'}>
             Register
           </Link>
+        </Col>
+
+        <Col>
+          <a href="mailto: creativeduo2020@gmail.com">Forgot Password?</a>
         </Col>
       </Row>
     </FormContainer>

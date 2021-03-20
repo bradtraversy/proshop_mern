@@ -5,7 +5,7 @@ import Product from '../models/productModel.js'
 // @route   GET /api/products
 // @access  Public
 const getProducts = asyncHandler(async (req, res) => {
-  const pageSize = 10
+  const pageSize = 12
   const page = Number(req.query.pageNumber) || 1
 
   const keyword = req.query.keyword
@@ -21,6 +21,7 @@ const getProducts = asyncHandler(async (req, res) => {
   const products = await Product.find({ ...keyword })
     .limit(pageSize)
     .skip(pageSize * (page - 1))
+    .find({}).sort([['createdAt', -1]])
 
   res.json({ products, page, pages: Math.ceil(count / pageSize) })
 })
@@ -59,15 +60,15 @@ const deleteProduct = asyncHandler(async (req, res) => {
 // @access  Private/Admin
 const createProduct = asyncHandler(async (req, res) => {
   const product = new Product({
-    name: 'Sample name',
-    price: 0,
+    name: 'Product',
+    price: 0.00,
     user: req.user._id,
-    image: '/images/sample.jpg',
-    brand: 'Sample brand',
-    category: 'Sample category',
-    countInStock: 0,
+    image: 'https://i.ibb.co/NTQt5z9/Untitled-1.png',
+    brand: 'Creative Duo',
+    category: '',
+    countInStock: 10,
     numReviews: 0,
-    description: 'Sample description',
+    description: '',
   })
 
   const createdProduct = await product.save()
@@ -152,7 +153,7 @@ const createProductReview = asyncHandler(async (req, res) => {
 // @route   GET /api/products/top
 // @access  Public
 const getTopProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find({}).sort({ rating: -1 }).limit(3)
+  const products = await Product.find({}).sort({ rating: -1 }).limit(10)
 
   res.json(products)
 })
