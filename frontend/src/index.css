@@ -1,0 +1,74 @@
+main {
+  min-height: 80vh;
+}
+
+h3 {
+  padding: 1rem 0;
+}
+
+h1 {
+  font-size: 1.8rem;
+  padding: 1rem 0;
+}
+
+h2 {
+  font-size: 1.4rem;
+  padding: 0.5rem 0;
+}
+
+.rating span {
+  margin: 0.1rem;
+}
+
+/* carousel */
+.carousel-item-next,
+.carousel-item-prev,
+.carousel-item.active {
+  display: flex;
+}
+
+.carousel-caption h2 {
+  color: rgb(0, 0, 0);
+  background: rgba(255, 255, 255, 0.842);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 10px;
+  padding: 15px;
+}
+
+.carousel a {
+  margin: 0 auto;
+}
+
+@media (max-width: 1000px) {
+  .carousel-caption h2 {
+    padding: 10px;
+    font-size: 15px;
+  }
+  .orderid {
+    font-size: medium;
+  }
+
+  .srch{
+    width: 100%;
+    margin-top: 3%;
+    margin-bottom: 6%;
+  }
+
+  .titprd{
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom:-5px;
+  }
+
+  .srchfld{
+    width: 100%;
+    margin-top: 10px;
+  }
+
+}
+@media (max-width: 600px) {
+  .carousel-caption {
+    font-size: 2px;
+  }
+}
