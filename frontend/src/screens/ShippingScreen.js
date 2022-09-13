@@ -13,12 +13,13 @@ const ShippingScreen = ({ history }) => {
   const [city, setCity] = useState(shippingAddress.city)
   const [postalCode, setPostalCode] = useState(shippingAddress.postalCode)
   const [country, setCountry] = useState(shippingAddress.country)
+  const [shipMethod, setShipMethod] = useState(shippingAddress.shipMethod)
 
   const dispatch = useDispatch()
 
   const submitHandler = (e) => {
     e.preventDefault()
-    dispatch(saveShippingAddress({ address, city, postalCode, country }))
+    dispatch(saveShippingAddress({ address, city, postalCode, country, shipMethod }))
     history.push('/payment')
   }
 
@@ -80,7 +81,7 @@ const ShippingScreen = ({ history }) => {
               id='shipping'
               name='shippingMethod'
               value='Standards'
-              //onChange={(e) => setPaymentMethod(e.target.value)}
+              onChange={(e) => setShipMethod(e.target.value)}
             ></Form.Check>
             { <Form.Check
               type='radio'
@@ -88,7 +89,7 @@ const ShippingScreen = ({ history }) => {
               id='fastshipping'
               name='shippingMethod'
               value='fastship'
-              //onChange={(e) => setPaymentMethod(e.target.value)}
+              onChange={(e) => setShipMethod(e.target.value)}
             ></Form.Check> }
           </Col>
         </Form.Group>
