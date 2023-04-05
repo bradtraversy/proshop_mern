@@ -24,6 +24,10 @@ const HomeScreen = ({ match }) => {
     dispatch(listProducts(keyword, pageNumber))
   }, [dispatch, keyword, pageNumber])
 
+  if(loading) return <Loader/>  
+
+  if(error) return <Message variant='danger'>{error}</Message>
+
   return (
     <>
       <Meta />
@@ -35,11 +39,6 @@ const HomeScreen = ({ match }) => {
         </Link>
       )}
       <h1>Latest Products</h1>
-      {loading ? (
-        <Loader />
-      ) : error ? (
-        <Message variant='danger'>{error}</Message>
-      ) : (
         <>
           <Row>
             {products.map((product) => (
@@ -54,7 +53,6 @@ const HomeScreen = ({ match }) => {
             keyword={keyword ? keyword : ''}
           />
         </>
-      )}
     </>
   )
 }
