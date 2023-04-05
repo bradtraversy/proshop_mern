@@ -85,11 +85,11 @@ const OrderScreen = ({ match, history }) => {
     dispatch(deliverOrder(order))
   }
 
-  return loading ? (
-    <Loader />
-  ) : error ? (
-    <Message variant='danger'>{error}</Message>
-  ) : (
+  if(loading) return <Loader/>  
+
+  if(error) return <Message variant='danger'>{error}</Message>
+
+  return (
     <>
       <h1>Order {order._id}</h1>
       <Row>
