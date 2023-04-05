@@ -1,67 +1,47 @@
 import React from 'react'
 
 const Rating = ({ value, text, color }) => {
+  const getStarClass = (val, index) => {
+    if (val >= index) {
+      return 'fas fa-star'
+    } else if (val >= index - 0.5) {
+      return 'fas fa-star-half-alt'
+    } else {
+      return 'far fa-star'
+    }
+  }
+
   return (
     <div className='rating'>
       <span>
-        <i
-          style={{ color }}
-          className={
-            value >= 1
-              ? 'fas fa-star'
-              : value >= 0.5
-              ? 'fas fa-star-half-alt'
-              : 'far fa-star'
-          }
-        ></i>
+        <i style={{ color }} className={getStarClass(value, 0.5)}></i>
       </span>
       <span>
-        <i
-          style={{ color }}
-          className={
-            value >= 2
-              ? 'fas fa-star'
-              : value >= 1.5
-              ? 'fas fa-star-half-alt'
-              : 'far fa-star'
-          }
-        ></i>
+        <i style={{ color }} className={getStarClass(value, 1)}></i>
       </span>
       <span>
-        <i
-          style={{ color }}
-          className={
-            value >= 3
-              ? 'fas fa-star'
-              : value >= 2.5
-              ? 'fas fa-star-half-alt'
-              : 'far fa-star'
-          }
-        ></i>
+        <i style={{ color }} className={getStarClass(value, 1.5)}></i>
       </span>
       <span>
-        <i
-          style={{ color }}
-          className={
-            value >= 4
-              ? 'fas fa-star'
-              : value >= 3.5
-              ? 'fas fa-star-half-alt'
-              : 'far fa-star'
-          }
-        ></i>
+        <i style={{ color }} className={getStarClass(value, 2)}></i>
       </span>
       <span>
-        <i
-          style={{ color }}
-          className={
-            value >= 5
-              ? 'fas fa-star'
-              : value >= 4.5
-              ? 'fas fa-star-half-alt'
-              : 'far fa-star'
-          }
-        ></i>
+        <i style={{ color }} className={getStarClass(value, 2.5)}></i>
+      </span>
+      <span>
+        <i style={{ color }} className={getStarClass(value, 3)}></i>
+      </span>
+      <span>
+        <i style={{ color }} className={getStarClass(value, 3.5)}></i>
+      </span>
+      <span>
+        <i style={{ color }} className={getStarClass(value, 4)}></i>
+      </span>
+      <span>
+        <i style={{ color }} className={getStarClass(value, 4.5)}></i>
+      </span>
+      <span>
+        <i style={{ color }} className={getStarClass(value, 5)}></i>
       </span>
       <span>{text && text}</span>
     </div>
