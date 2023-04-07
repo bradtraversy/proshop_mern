@@ -139,7 +139,7 @@ const OrderScreen = ({ match, history }) => {
               ) : (
                 <ListGroup variant='flush'>
                   {order.orderItems.map((item, index) => (
-                    <ListGroup.Item key={index}>
+                    <ListGroup.Item key={item.name}>
                       <Row>
                         <Col md={1}>
                           <Image
