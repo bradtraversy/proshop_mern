@@ -89,7 +89,7 @@ const PlaceOrderScreen = ({ history }) => {
               ) : (
                 <ListGroup variant='flush'>
                   {cart.cartItems.map((item, index) => (
-                    <ListGroup.Item key={index}>
+                    <ListGroup.Item key={item.name}>
                       <Row>
                         <Col md={1}>
                           <Image

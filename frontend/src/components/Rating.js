@@ -43,7 +43,7 @@ const Rating = ({ value, text, color }) => {
       <span>
         <i style={{ color }} className={getStarClass(value, 5)}></i>
       </span>
-      <span>{text && text}</span>
+      <span>{text ? text : null}</span>
     </div>
   )
 }
