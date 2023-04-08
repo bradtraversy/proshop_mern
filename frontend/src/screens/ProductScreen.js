@@ -62,12 +62,11 @@ const ProductScreen = ({ history, match }) => {
       <Link className='btn btn-light my-3' to='/'>
         Go Back
       </Link>
-
-      if(loading) return <Loader/>
-
-      if (error) return <Message variant='danger'>{error}</Message>
-
-      return (
+      {loading ? (
+        <Loader />
+      ) : error ? (
+        <Message variant='danger'>{error}</Message>
+      ) : (
         <>
           <Meta title={product.name} />
           <Row>
@@ -217,7 +216,7 @@ const ProductScreen = ({ history, match }) => {
             </Col>
           </Row>
         </>
-      )
+      )}
     </>
   )
 }
