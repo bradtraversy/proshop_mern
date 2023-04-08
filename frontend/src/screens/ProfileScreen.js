@@ -60,11 +60,11 @@ const ProfileScreen = ({ location, history }) => {
         {message && <Message variant='danger'>{message}</Message>}
         {}
         {success && <Message variant='success'>Profile Updated</Message>}
-        {loading ? (
-          <Loader />
-        ) : error ? (
-          <Message variant='danger'>{error}</Message>
-        ) : (
+         
+        {loading && <Loader/>}
+
+        {error && <Message variant='danger'>{error}</Message>}
+        {!loading && !error && (
           <Form onSubmit={submitHandler}>
             <Form.Group controlId='name'>
               <Form.Label>Name</Form.Label>
