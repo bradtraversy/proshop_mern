@@ -195,7 +195,7 @@ const OrderScreen = ({ match, history }) => {
                   <Col>${order.totalPrice}</Col>
                 </Row>
               </ListGroup.Item>
-              {!order.isPaid && (
+              {/* {!order.isPaid && (
                 <ListGroup.Item>
                   {loadingPay && <Loader />}
                   {!sdkReady ? (
@@ -207,7 +207,7 @@ const OrderScreen = ({ match, history }) => {
                     />
                   )}
                 </ListGroup.Item>
-              )}
+              )} */}
               {loadingDeliver && <Loader />}
               {userInfo &&
                 userInfo.isAdmin &&
