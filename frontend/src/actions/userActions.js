@@ -37,7 +37,9 @@ import {
 //   isAdmin: user.isAdmin,
 //   token: generateToken(user._id),
 // })
-// inside the callback, dispatch the following login action:
+// inside the callback, dispatch the following login action with different
+// parameters.
+// export const login = (userInfo) => async (dispatch) => {
 
 export const login = (email, password) => async (dispatch) => {
   try {
@@ -59,9 +61,13 @@ export const login = (email, password) => async (dispatch) => {
     // backend/controllers/userController.js:
     // authUser()
 
-    // With Auth0, we can ignore the previous 3 code blocks and
+    // With Auth0, we can ignore the previous 3 code blocks. We just need to do
     // dispatch USER_LOGIN_SUCCESS. We will need to get data from
-    // Auth0 and pass it to the payload.
+    // Auth0 and pass it to the payload. So it will look something like this:
+    // dispatch({
+    //   type: USER_LOGIN_SUCCESS,
+    //   payload: userInfo,
+    // });
 
     dispatch({
       type: USER_LOGIN_SUCCESS,
