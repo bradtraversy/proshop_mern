@@ -15,6 +15,8 @@ ReactDOM.render(
     authorizationParams={{
       redirect_uri: window.location.origin,
     }}
+    useRefreshTokens
+    cacheLocation="localstorage"
   >
     <Provider store={store}>
       <App />
