@@ -48,7 +48,7 @@ export const loginWithAuth0 = (userInfo) => async (dispatch) => {
       _id: userInfo.sub,
       name: userInfo.name,
       email: userInfo.email,
-      isAdmin: userInfo['https://example.com/roles'].includes('admin'),
+      isAdmin: userInfo['https://example.com/roles']?.includes('admin'),
     };
 
     dispatch({
@@ -78,9 +78,18 @@ export const loginWithAuth0 = (userInfo) => async (dispatch) => {
       if (axiosData.data) {
         dispatch({
           type: USER_REGISTER_SUCCESS,
-          payload: axiosData.data,
+          payload: { ...axiosData.data, isAdmin: data.isAdmin },
         });
-        localStorage.setItem('userInfo', JSON.stringify(axiosData.data));
+
+        dispatch({
+          type: USER_LOGIN_SUCCESS,
+          payload: { ...axiosData.data, isAdmin: data.isAdmin },
+        });
+
+        localStorage.setItem(
+          'userInfo',
+          JSON.stringify({ ...axiosData.data, isAdmin: data.isAdmin })
+        );
       }
     } catch (error) {
       dispatch(registerWithAuth0(data));

@@ -31,10 +31,10 @@ const ProfileScreen = ({ location, history }) => {
 
   useEffect(() => {
     if (!userInfo) {
-      alert('no user');
+      alert('no user info');
       history.push('/login');
     } else {
-      alert('user');
+      alert('user info exists');
       if (!user || !user.name || success) {
         alert('no user Details');
 
