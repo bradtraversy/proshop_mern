@@ -39,7 +39,34 @@ import {
 // })
 // inside the callback, dispatch the following login action with different
 // parameters.
-// export const login = (userInfo) => async (dispatch) => {
+export const loginWithAuth0 = (userInfo) => async (dispatch) => {
+  try {
+    dispatch({
+      type: USER_LOGIN_REQUEST,
+    });
+    const data = {
+      _id: userInfo._id,
+      name: userInfo.name,
+      email: userInfo.email,
+      isAdmin: userInfo['https://example.com/roles'].includes('admin'),
+    };
+
+    dispatch({
+      type: USER_LOGIN_SUCCESS,
+      payload: data,
+    });
+
+    localStorage.setItem('userInfo', JSON.stringify(data));
+  } catch (error) {
+    dispatch({
+      type: USER_LOGIN_FAIL,
+      payload:
+        error.response && error.response.data.message
+          ? error.response.data.message
+          : error.message,
+    });
+  }
+};
 
 export const login = (email, password) => async (dispatch) => {
   try {
