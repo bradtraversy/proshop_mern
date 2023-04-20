@@ -45,7 +45,7 @@ export const loginWithAuth0 = (userInfo) => async (dispatch) => {
       type: USER_LOGIN_REQUEST,
     });
     const data = {
-      _id: userInfo._id,
+      _id: userInfo.sub,
       name: userInfo.name,
       email: userInfo.email,
       isAdmin: userInfo['https://example.com/roles'].includes('admin'),
@@ -57,6 +57,38 @@ export const loginWithAuth0 = (userInfo) => async (dispatch) => {
     });
 
     localStorage.setItem('userInfo', JSON.stringify(data));
+
+    // Now check if userdetails is already in database. If not, create it.
+    try {
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      };
+      console.log('loginWithAuth0', userInfo);
+      const axiosData = await axios.post(
+        '/api/users/login',
+        {
+          email: userInfo.email,
+          password: userInfo.sub,
+        },
+        config
+      );
+
+      if (axiosData.data) {
+        dispatch({
+          type: USER_REGISTER_SUCCESS,
+          payload: axiosData.data,
+        });
+        localStorage.setItem('userInfo', JSON.stringify(axiosData.data));
+      }
+    } catch (error) {
+      dispatch(registerWithAuth0(data));
+    }
+
+    // At this point, we have the user info from Auth0 and we have
+    // stored it in localStorage. Back in /callback, we can now
+    // redirect to the home page.
   } catch (error) {
     dispatch({
       type: USER_LOGIN_FAIL,
@@ -128,7 +160,65 @@ export const logout = () => (dispatch) => {
   dispatch({ type: USER_DETAILS_RESET });
   dispatch({ type: ORDER_LIST_MY_RESET });
   dispatch({ type: USER_LIST_RESET });
-  document.location.href = '/login';
+  // document.location.href = '/';
+};
+
+const sleepsecs = async (n) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, n * 1000);
+  });
+};
+
+export const registerWithAuth0 = (userInfo) => async (dispatch) => {
+  try {
+    alert('registerwithAuth0 userInfo', userInfo);
+    dispatch({
+      type: USER_REGISTER_REQUEST,
+    });
+
+    // await sleepsecs(120);
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
+    console.log('registerwithAuth0 userInfo', userInfo);
+    const { data } = await axios.post(
+      '/api/users',
+      {
+        name: userInfo.name,
+        email: userInfo.email,
+        password: userInfo._id,
+        isAdmin: userInfo.isAdmin,
+      },
+      config
+    );
+
+    dispatch({
+      type: USER_REGISTER_SUCCESS,
+      payload: data,
+    });
+
+    dispatch({
+      type: USER_LOGIN_SUCCESS,
+      payload: data,
+    });
+
+    localStorage.setItem('userInfo', JSON.stringify(data));
+  } catch (error) {
+    console.log(error);
+    dispatch({
+      type: USER_REGISTER_FAIL,
+      payload:
+        error.response && error.response.data.message
+          ? error.response.data.message
+          : error.message,
+    });
+  }
 };
 
 export const register = (name, email, password) => async (dispatch) => {
@@ -172,6 +262,7 @@ export const register = (name, email, password) => async (dispatch) => {
 };
 
 export const getUserDetails = (id) => async (dispatch, getState) => {
+  alert('getUserDetails');
   try {
     dispatch({
       type: USER_DETAILS_REQUEST,
@@ -194,6 +285,10 @@ export const getUserDetails = (id) => async (dispatch, getState) => {
       payload: data,
     });
   } catch (error) {
+    const {
+      userLogin: { userInfo },
+    } = getState();
+    console.log(userInfo);
     const message =
       error.response && error.response.data.message
         ? error.response.data.message

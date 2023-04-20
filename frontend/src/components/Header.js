@@ -12,8 +12,8 @@ const Auth0Login = () => {
 
   return (
     <Button
-      onClick={() =>
-        loginWithRedirect({
+      onClick={async () =>
+        await loginWithRedirect({
           authorizationParams: {
             redirect_uri: window.location.origin + '/callback',
           },
