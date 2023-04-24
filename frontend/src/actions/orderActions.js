@@ -159,6 +159,8 @@ export const deliverOrder = (order) => async (dispatch, getState) => {
       userLogin: { userInfo },
     } = getState();
 
+    // console.log('userInfo', userInfo);
+
     const config = {
       headers: {
         Authorization: `Bearer ${userInfo.token}`,

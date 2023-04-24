@@ -31,18 +31,18 @@ const ProfileScreen = ({ location, history }) => {
 
   useEffect(() => {
     if (!userInfo) {
-      alert('no user info');
+      // alert('no user info');
       history.push('/login');
     } else {
-      alert('user info exists');
+      // alert('user info exists');
       if (!user || !user.name || success) {
-        alert('no user Details');
+        // alert('no user Details');
 
         dispatch({ type: USER_UPDATE_PROFILE_RESET });
         dispatch(getUserDetails('profile'));
         dispatch(listMyOrders());
       } else {
-        alert('user Details success');
+        // alert('user Details success');
         setName(user.name);
         setEmail(user.email);
       }

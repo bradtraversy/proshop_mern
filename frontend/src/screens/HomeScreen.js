@@ -42,7 +42,6 @@ const HomeScreen = ({ match }) => {
         </Link>
       )}
       <h1>Latest Products</h1>
-      <code>{JSON.stringify(userdata, null, 2)}</code>
       <>
         <Row>
           {products.map((product) => (

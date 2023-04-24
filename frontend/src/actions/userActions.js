@@ -65,7 +65,7 @@ export const loginWithAuth0 = (userInfo) => async (dispatch) => {
           'Content-Type': 'application/json',
         },
       };
-      console.log('loginWithAuth0', userInfo);
+      // console.log('loginWithAuth0', userInfo);
       const axiosData = await axios.post(
         '/api/users/login',
         {
@@ -74,6 +74,11 @@ export const loginWithAuth0 = (userInfo) => async (dispatch) => {
         },
         config
       );
+
+      const newAxiosData = {
+        ...axiosData.data,
+        isAdmin: userInfo['https://example.com/roles']?.includes('admin'),
+      };
 
       if (axiosData.data) {
         dispatch({
@@ -92,6 +97,8 @@ export const loginWithAuth0 = (userInfo) => async (dispatch) => {
         );
       }
     } catch (error) {
+      console.error(error);
+      // console.log('data', data);
       dispatch(registerWithAuth0(data));
     }
 
@@ -182,7 +189,6 @@ const sleepsecs = async (n) => {
 
 export const registerWithAuth0 = (userInfo) => async (dispatch) => {
   try {
-    alert('registerwithAuth0 userInfo', userInfo);
     dispatch({
       type: USER_REGISTER_REQUEST,
     });
@@ -195,7 +201,7 @@ export const registerWithAuth0 = (userInfo) => async (dispatch) => {
       },
     };
 
-    console.log('registerwithAuth0 userInfo', userInfo);
+    // console.log('registerwithAuth0 userInfo', userInfo);
     const { data } = await axios.post(
       '/api/users',
       {
@@ -219,7 +225,7 @@ export const registerWithAuth0 = (userInfo) => async (dispatch) => {
 
     localStorage.setItem('userInfo', JSON.stringify(data));
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     dispatch({
       type: USER_REGISTER_FAIL,
       payload:
@@ -271,7 +277,6 @@ export const register = (name, email, password) => async (dispatch) => {
 };
 
 export const getUserDetails = (id) => async (dispatch, getState) => {
-  alert('getUserDetails');
   try {
     dispatch({
       type: USER_DETAILS_REQUEST,
@@ -297,7 +302,7 @@ export const getUserDetails = (id) => async (dispatch, getState) => {
     const {
       userLogin: { userInfo },
     } = getState();
-    console.log(userInfo);
+    // console.log(userInfo);
     const message =
       error.response && error.response.data.message
         ? error.response.data.message
