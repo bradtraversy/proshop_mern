@@ -3,27 +3,26 @@ import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { Row, Col, ListGroup, Image, Form, Button, Card } from 'react-bootstrap'
 import Message from '../components/Message'
+import { addToLater, removeFromLater } from '../actions/laterActions'
 
-import { addToCart, removeFromCart } from '../actions/cartActions'
-
-const CartScreen = ({ match, location, history }) => {
+const LaterScreen = ({ match, location, history }) => {
   const productId = match.params.id
 
   const qty = location.search ? Number(location.search.split('=')[1]) : 1
 
   const dispatch = useDispatch()
 
-  const cart = useSelector((state) => state.cart)
-  const { cartItems } = cart
+  const later = useSelector((state) => state.later)
+  const { laterItems } = later
 
   useEffect(() => {
     if (productId) {
-      dispatch(addToCart(productId, qty))
+      dispatch(addToLater(productId, qty))
     }
   }, [dispatch, productId, qty])
 
-  const removeFromCartHandler = (id) => {
-    dispatch(removeFromCart(id))
+  const removeFromLaterHandler = (id) => {
+    dispatch(removeFromLater(id))
   }
 
   const checkoutHandler = () => {
@@ -33,14 +32,14 @@ const CartScreen = ({ match, location, history }) => {
   return (
     <Row>
       <Col md={8}>
-        <h1>Shopping Cart</h1>
-        {cartItems.length === 0 ? (
+        <h1>Items Saved For Later</h1>
+        {laterItems.length === 0 ? (
           <Message>
-            Your cart is empty <Link to='/'>Go Back</Link>
+            Your saved items for later is empty <Link to='/'>Go Back</Link>
           </Message>
         ) : (
           <ListGroup variant='flush'>
-            {cartItems.map((item) => (
+            {laterItems.map((item) => (
               <ListGroup.Item key={item.product}>
                 <Row>
                   <Col md={2}>
@@ -56,7 +55,7 @@ const CartScreen = ({ match, location, history }) => {
                       value={item.qty}
                       onChange={(e) =>
                         dispatch(
-                          addToCart(item.product, Number(e.target.value))
+                          addToLater(item.product, Number(e.target.value))
                         )
                       }
                     >
@@ -71,7 +70,7 @@ const CartScreen = ({ match, location, history }) => {
                     <Button
                       type='button'
                       variant='light'
-                      onClick={() => removeFromCartHandler(item.product)}
+                      onClick={() => removeFromLaterHandler(item.product)}
                     >
                       <i className='fas fa-trash'></i>
                     </Button>
@@ -87,29 +86,24 @@ const CartScreen = ({ match, location, history }) => {
           <ListGroup variant='flush'>
             <ListGroup.Item>
               <h2>
-                Subtotal ({cartItems.reduce((acc, item) => acc + item.qty, 0)})
+                Subtotal ({laterItems.reduce((acc, item) => acc + item.qty, 0)})
                 items
               </h2>
               $
-              {cartItems
+              {laterItems
                 .reduce((acc, item) => acc + item.qty * item.price, 0)
                 .toFixed(2)}
             </ListGroup.Item>
-            <ListGroup.Item>
+            {/* <ListGroup.Item>
               <Button
                 type='button'
                 className='btn-block'
-                disabled={cartItems.length === 0}
+                disabled={laterItems.length === 0}
                 onClick={checkoutHandler}
               >
                 Proceed To Checkout
               </Button>
-            </ListGroup.Item>
-            <ListGroup.Item>
-              <Link to='/later'>
-                Click here to view items you saved for later
-              </Link>
-            </ListGroup.Item>
+            </ListGroup.Item> */}
           </ListGroup>
         </Card>
       </Col>
@@ -117,4 +111,4 @@ const CartScreen = ({ match, location, history }) => {
   )
 }
 
-export default CartScreen
+export default LaterScreen

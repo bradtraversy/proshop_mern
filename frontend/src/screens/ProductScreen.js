@@ -47,6 +47,10 @@ const ProductScreen = ({ history, match }) => {
     history.push(`/cart/${match.params.id}?qty=${qty}`)
   }
 
+  const saveForLaterHandler = () => {
+    history.push(`/later/${match.params.id}?qty=${qty}`)
+  }
+
   const submitHandler = (e) => {
     e.preventDefault()
     dispatch(
@@ -142,6 +146,14 @@ const ProductScreen = ({ history, match }) => {
                       disabled={product.countInStock === 0}
                     >
                       Add To Cart
+                    </Button>
+                    <Button
+                      onClick={saveForLaterHandler}
+                      className='btn-block'
+                      type='button'
+                      disabled={product.countInStock === 0}
+                    >
+                      Save for later
                     </Button>
                   </ListGroup.Item>
                 </ListGroup>
