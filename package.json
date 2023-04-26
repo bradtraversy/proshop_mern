@@ -4,7 +4,9 @@
   "description": "MERN shopping cart app",
   "main": "server.js",
   "type": "module",
+  "repository": "https://github.com/Brian-Pob/swe2_proshop_mern",
   "scripts": {
+    "build": "webpack",
     "start": "node backend/server",
     "server": "nodemon backend/server",
     "client": "npm start --prefix frontend",
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "concurrently": "^5.3.0",
-    "nodemon": "^2.0.4"
+    "nodemon": "^2.0.4",
+    "webpack": "4.42.0"
   }
 }
