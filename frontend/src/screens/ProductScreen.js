@@ -11,11 +11,15 @@ import {
   createProductReview,
 } from '../actions/productActions'
 import { PRODUCT_CREATE_REVIEW_RESET } from '../constants/productConstants'
+import { FacebookShareButton } from 'react-share'
+import SharePopup from '../components/SharePopup'
+
 
 const ProductScreen = ({ history, match }) => {
   const [qty, setQty] = useState(1)
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
+  const [sharePopup, setSharePopup] = useState(false) // default to false (no popup)
 
   const dispatch = useDispatch()
 
@@ -46,6 +50,7 @@ const ProductScreen = ({ history, match }) => {
   const addToCartHandler = () => {
     history.push(`/cart/${match.params.id}?qty=${qty}`)
   }
+
 
   const submitHandler = (e) => {
     e.preventDefault()
@@ -156,6 +161,20 @@ const ProductScreen = ({ history, match }) => {
                       Add To Cart
                     </Button>
                   </ListGroup.Item>
+
+                  <ListGroup.Item>
+                    <Button 
+                      className='btn-block' 
+                      type='button' 
+                      onClick={() => setSharePopup(true)}
+                    >
+                      Share
+                      <i class="fa fa-share-alt" aria-hidden="true"></i>
+                    </Button>
+                    <SharePopup trigger={sharePopup} setTrigger={setSharePopup} link={window.location.href}>
+                    </SharePopup>
+                  </ListGroup.Item>
+
                 </ListGroup>
               </Card>
             </Col>
