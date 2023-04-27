@@ -1,19 +1,26 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { sendEmail } from '../actions/contactActions';
+import { useDispatch } from 'react-redux';
 
-const ContactForm = () => {
+const ContactScreen = () => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const handleSubmit = async (e) => {
+  const dispatch = useDispatch()
+
+  const submitHandler = async (e) => {
     e.preventDefault();
     if (!subject || !message) {
       setError('All fields are required');
     } else {
       try {
-        await axios.post('/api/send-email', { subject, message });
+        // dispatch login
+        console.log({subject, message})
+        dispatch(sendEmail(subject,message))
+        // await axios.post('/api/send-email', { subject, message });
         setSuccessMessage('Email sent successfully');
         setSubject('');
         setMessage('');
@@ -27,7 +34,7 @@ const ContactForm = () => {
   return (
     <>
         <h1>Contact Us</h1>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={submitHandler}>
             <div><label>
             Subject:
             <input
@@ -53,4 +60,4 @@ const ContactForm = () => {
   );
 };
 
-export default ContactForm;
+export default ContactScreen;
