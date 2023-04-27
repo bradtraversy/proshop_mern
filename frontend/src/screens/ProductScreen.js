@@ -161,16 +161,18 @@ const ProductScreen = ({ history, match }) => {
                       Add To Cart
                     </Button>
                   </ListGroup.Item>
-
+                  {/* button added to share */}
                   <ListGroup.Item>
                     <Button 
                       className='btn-block' 
                       type='button' 
-                      onClick={() => setSharePopup(true)}
+                      onClick={() => setSharePopup(true)} // on click show SharePopup
                     >
                       Share
                       <i class="fa fa-share-alt" aria-hidden="true"></i>
                     </Button>
+                    {/* sharePopup in trigger is a bool, will turn true on click of share button and show this component */}
+                    {/* link gives the current url, unique for each product, set trigger allows us to close the popup with the x button */}
                     <SharePopup trigger={sharePopup} setTrigger={setSharePopup} link={window.location.href}>
                     </SharePopup>
                   </ListGroup.Item>
