@@ -1,8 +1,3 @@
-const mailgun_api_key = process.env.MAILGUN_API_KEY;
-const domain = process.env.MAILGUN_DOMAIN;
-const email_password = process.env.MAILGUN_PASSWORD;
-const to_email_address = process.env.TO_EMAIL_ADDRESS;
-
 import nodemailer from 'nodemailer' 
 
 // @desc    Send email
@@ -15,33 +10,34 @@ const sendMail = async (req, res) => {
 
   // problem with how you're sending it
   console.log("In contact controller (sendMail)!!!")
-  console.log('subject', subject)
-  console.log('message', message)
+  console.log("")
+  console.log('Subject: ', subject)
+  console.log('Message:', message)
+  console.log("")
 
   // Make sure all fields are filled in
   if (!subject || !message) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
-  console.log("past error 400")
+  console.log("Past error 400")
 
   // create reusable transporter object using the default SMTP transport 
   var transporter = nodemailer.createTransport({
-    service: 'smtp.mailgun.org',
-    port: 587,
+    service: 'gmail',
     auth: {
-      user: domain,
-      pass: email_password
+      user: process.env.EMAIL_ADDRESS,
+      pass: process.env.EMAIL_PASSWORD,
     }
   });
 
   console.log("Past transporter")
 
   var mailOptions = {
-    from: domain,
-    to: domain,
-    subject: 'Sending Email using Node.js',
-    text: 'That was easy!'
+    from: process.env.EMAIL_ADDRESS,
+    to: process.env.EMAIL_ADDRESS,
+    subject: subject,
+    text: message
   };
 
   console.log("Past mail options")
