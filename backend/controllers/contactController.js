@@ -1,7 +1,7 @@
 const mailgun_api_key = process.env.MAILGUN_API_KEY;
 const domain = process.env.MAILGUN_DOMAIN;
+const email_password = process.env.MAILGUN_PASSWORD;
 const to_email_address = process.env.TO_EMAIL_ADDRESS;
-const email_password = process.env.EMAIL_PASSWORD
 
 // @desc    Send email
 // @route   POST /api/send-email
@@ -39,10 +39,3 @@ const sendMail = async (req, res) => {
 }
 
 export { sendMail };
-
-
-
-
-
-
-
