@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { sendEmail } from '../actions/contactActions';
 import { useDispatch } from 'react-redux';
 
@@ -17,10 +16,11 @@ const ContactScreen = () => {
       setError('All fields are required');
     } else {
       try {
-        // dispatch login
+        console.log("In ContactScreen (submit handler)")
         console.log({subject, message})
-        dispatch(sendEmail(subject,message))
-        // await axios.post('/api/send-email', { subject, message });
+        
+        // dispatch sendEmail
+        dispatch(sendEmail({subject,message})) // goes to contactActions
         setSuccessMessage('Email sent successfully');
         setSubject('');
         setMessage('');
