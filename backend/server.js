@@ -27,7 +27,8 @@ app.use('/api/products', productRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/upload', uploadRoutes)
-app.use('/api/send-email', contactRoutes)
+// Use the contactRoutes file for handling incoming requests to "/api/send-email"
+app.use('/api/send-email', contactRoutes) 
 app.get('/api/config/paypal', (req, res) =>
   res.send(process.env.PAYPAL_CLIENT_ID)
 );
@@ -50,7 +51,7 @@ if (process.env.NODE_ENV === 'production') {
 app.use(notFound);
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 
 app.listen(
   PORT,

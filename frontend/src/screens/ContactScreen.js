@@ -3,31 +3,42 @@ import { sendEmail } from '../actions/contactActions';
 import { useDispatch } from 'react-redux';
 
 const ContactScreen = () => {
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  // Define states using the useState hook
+  const [subject, setSubject] = useState(''); // subject of email 
+  const [message, setMessage] = useState(''); // message of email
+  const [error, setError] = useState(''); ; // error message if there is an issue sending the email
+  const [successMessage, setSuccessMessage] = useState(''); // success message when email is sent
 
+  // Dispatcher to dispatch actions to the Redux store
   const dispatch = useDispatch()
 
   const submitHandler = async (e) => {
+    // Called the user clicks the "Send" button on the website
+    // Prevents default form submission behavior
     e.preventDefault();
     if (!subject || !message) {
+      // If the subejct or message are blank set the error
       setError('All fields are required');
     } else {
+      // Subject and message are valid (aka. not blank)
       try {
-        // dispatch sendEmail
+        // dispatch sendEmail action
         dispatch(sendEmail({subject,message})) // goes to contactActions
+        // Set the success message
         setSuccessMessage('Email sent successfully');
+        // Clear the subject and message fields on the form after the email is sent successfully
         setSubject('');
         setMessage('');
       } catch (error) {
+        // If there is an error, log it to console
         console.log(error);
+        // Set the error message
         setError('Something went wrong');
       }
     }
   };
 
+  // HTML code to display the form on the Contact Us page of the website
   return (
     <>
         <h1>Contact Us</h1>
