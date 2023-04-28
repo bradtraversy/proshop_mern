@@ -61,8 +61,10 @@ const Header = () => {
                   <i className="fas fa-shopping-cart"></i> Cart
                 </Nav.Link>
               </LinkContainer>
+              {/* Add the Contact Us page to the header */}
               <LinkContainer to='/contact-us'>
                 <Nav.Link>
+                  {/* Display an envelope icon next to the "Contact Us" link in the header */}
                   <i className="fa fa-envelope" aria-hidden="true"></i> Contact Us
                 </Nav.Link>
               </LinkContainer>
