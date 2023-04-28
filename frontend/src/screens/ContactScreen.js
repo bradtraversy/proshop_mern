@@ -16,9 +16,6 @@ const ContactScreen = () => {
       setError('All fields are required');
     } else {
       try {
-        console.log("In ContactScreen (submit handler)")
-        console.log({subject, message})
-        
         // dispatch sendEmail
         dispatch(sendEmail({subject,message})) // goes to contactActions
         setSuccessMessage('Email sent successfully');

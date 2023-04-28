@@ -28,7 +28,7 @@ import {
   orderListMyReducer,
   orderListReducer,
 } from './reducers/orderReducers'
-import { contactReducer } from './reducers/contactReducer'
+import { contactReducer } from './reducers/contactReducers'
 
 const reducer = combineReducers({
   productList: productListReducer,

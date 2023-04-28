@@ -1,10 +1,7 @@
 import axios from 'axios'
 import { CONTACT_REQUEST, CONTACT_SUCCESS, CONTACT_FAIL } from '../constants/contactConstants'
 
-// export const sendEmail = () => async (dispatch, getState) => {
 export const sendEmail = (subject, message) => async (dispatch) => {
-    console.log("In contactActions (sendEmail)!")
-    console.log(subject, message)
     try {
         dispatch({
             type: CONTACT_REQUEST, // goes to contactReducer
