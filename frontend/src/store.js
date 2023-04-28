@@ -30,6 +30,8 @@ import {
   orderListMyReducer,
   orderListReducer,
 } from './reducers/orderReducers'
+// Bring in the contactReducer
+import { contactReducer } from './reducers/contactReducers'
 
 const reducer = combineReducers({
   productList: productListReducer,
@@ -54,6 +56,11 @@ const reducer = combineReducers({
   orderDeliver: orderDeliverReducer,
   orderListMy: orderListMyReducer,
   orderList: orderListReducer,
+  // Bring in the state properties related to the Contact Us feature
+  // and map to the contactReducer
+  contactRequest: contactReducer,
+  contactSuccess: contactReducer,
+  contactFail: contactReducer,
 })
 
 const cartItemsFromStorage = localStorage.getItem('cartItems')

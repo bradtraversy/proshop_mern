@@ -6,15 +6,25 @@ import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap'
 import SearchBox from './SearchBox'
 import { logout } from '../actions/userActions'
 
-const Header = () => {
+const Auth0Logout = () => {
+  const { logout } = useAuth0()
   const dispatch = useDispatch()
 
+  return (
+    <Button
+      onClick={() => {
+        logout({ logoutParams: { returnTo: window.location.origin } })
+        dispatch(userLogoutAction())
+      }}
+    >
+      Log Out
+    </Button>
+  )
+}
+
+const Header = () => {
   const userLogin = useSelector((state) => state.userLogin)
   const { userInfo } = userLogin
-
-  const logoutHandler = () => {
-    dispatch(logout())
-  }
 
   return (
     <header>
@@ -32,6 +42,22 @@ const Header = () => {
                   <i className='fas fa-shopping-cart'></i> Cart
                 </Nav.Link>
               </LinkContainer>
+              {/* Add the Contact Us page to the header */}
+              <LinkContainer to='/contact-us'>
+                <Nav.Link>
+                  {/* Display an envelope icon next to the "Contact Us" link in the header */}
+                  <i className='fa fa-envelope' aria-hidden='true'></i> Contact
+                  Us
+                </Nav.Link>
+              </LinkContainer>
+              {/* Add the Contact Us page to the header */}
+              <LinkContainer to='/contact-us'>
+                <Nav.Link>
+                  {/* Display an envelope icon next to the "Contact Us" link in the header */}
+                  <i className='fa fa-envelope' aria-hidden='true'></i> Contact
+                  Us
+                </Nav.Link>
+              </LinkContainer>
               {userInfo ? (
                 <NavDropdown title={userInfo.name} id='username'>
                   <LinkContainer to='/profile'>
@@ -40,16 +66,10 @@ const Header = () => {
                   <LinkContainer to='/later'>
                     <NavDropdown.Item>Saved Items</NavDropdown.Item>
                   </LinkContainer>
-                  <NavDropdown.Item onClick={logoutHandler}>
-                    Logout
-                  </NavDropdown.Item>
+                  <Auth0Logout />
                 </NavDropdown>
               ) : (
-                <LinkContainer to='/login'>
-                  <Nav.Link>
-                    <i className='fas fa-user'></i> Sign In
-                  </Nav.Link>
-                </LinkContainer>
+                <Auth0Login />
               )}
               {userInfo && userInfo.isAdmin && (
                 <NavDropdown title='Admin' id='adminmenu'>
