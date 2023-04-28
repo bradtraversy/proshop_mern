@@ -1,5 +1,4 @@
 import { useAuth0 } from '@auth0/auth0-react';
-import React, { useEffect } from 'react';
 import { Button, Col, Row } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -11,7 +10,14 @@ import Paginate from '../components/Paginate';
 import Product from '../components/Product';
 import ProductCarousel from '../components/ProductCarousel';
 
+import React from 'react';
+import { useState, useEffect } from 'react';
+
+
+
 const HomeScreen = ({ match }) => {
+
+  const [selectedCategory, setSelectedCategory] = useState('');
   const keyword = match.params.keyword;
 
   const pageNumber = match.params.pageNumber || 1;
@@ -37,8 +43,9 @@ const HomeScreen = ({ match }) => {
   if (error) return <Message variant="danger">{error}</Message>;
 
   const handleChange = (event) =>{
-    selectedOption(event.target.value)
+    setSelectedCategory(event.target.value) //helps for drop down stuff
   }
+
 
   const categories = [...new Set(products.map((product) => product.category))];
 
@@ -59,7 +66,8 @@ const HomeScreen = ({ match }) => {
         <div>
           <label>
             Category
-          <select>
+          <select value={selectedCategory} onChange={handleChange}>
+          
             {categories.map((category) => (
               <option key={category} value={category}>
                 {category}
