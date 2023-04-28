@@ -11,8 +11,6 @@ import orderRoutes from './routes/orderRoutes.js'
 import uploadRoutes from './routes/uploadRoutes.js'
 import contactRoutes from './routes/contactRoutes.js'
 
-import colors from 'colors';
-
 dotenv.config();
 
 connectDB();
