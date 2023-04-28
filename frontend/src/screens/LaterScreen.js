@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Row, Col, ListGroup, Image, Form, Button, Card } from 'react-bootstrap'
 import Message from '../components/Message'
 import { addToLater, removeFromLater } from '../actions/laterActions'
+import { addToCart } from '../actions/cartActions'
 
 const LaterScreen = ({ match, location, history }) => {
   const productId = match.params.id
@@ -25,8 +26,10 @@ const LaterScreen = ({ match, location, history }) => {
     dispatch(removeFromLater(id))
   }
 
-  const checkoutHandler = () => {
-    history.push('/login?redirect=shipping')
+  const addToCartHandler = (id, qty) => {
+    // Adds the product to the cart and removes it from the saved for later list
+    dispatch(addToCart(id, qty))
+    dispatch(removeFromLater(id))
   }
 
   return (
@@ -66,13 +69,24 @@ const LaterScreen = ({ match, location, history }) => {
                       ))}
                     </Form.Control>
                   </Col>
-                  <Col md={2}>
+                  <Col md={1}>
                     <Button
                       type='button'
                       variant='light'
                       onClick={() => removeFromLaterHandler(item.product)}
+                      style={{ marginRight: '0rem' }}
                     >
                       <i className='fas fa-trash'></i>
+                    </Button>
+                  </Col>
+                  <Col md={1}>
+                    <Button
+                      type='button'
+                      variant='light'
+                      onClick={() => addToCartHandler(item.product, item.qty)}
+                      style={{ marginLeft: '0rem' }}
+                    >
+                      <p>Add to cart</p>
                     </Button>
                   </Col>
                 </Row>
@@ -94,16 +108,6 @@ const LaterScreen = ({ match, location, history }) => {
                 .reduce((acc, item) => acc + item.qty * item.price, 0)
                 .toFixed(2)}
             </ListGroup.Item>
-            {/* <ListGroup.Item>
-              <Button
-                type='button'
-                className='btn-block'
-                disabled={laterItems.length === 0}
-                onClick={checkoutHandler}
-              >
-                Proceed To Checkout
-              </Button>
-            </ListGroup.Item> */}
           </ListGroup>
         </Card>
       </Col>
