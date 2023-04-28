@@ -74,7 +74,14 @@ const HomeScreen = ({ match }) => {
               </option>
             ))}
           </select>
+
+          <form>
+            <input type="number" placeholder="Lower Bound Price" />
+            <input type="number" placeholder="Upper Bound Price" />
+            <button type="submit">Apply Filter</button>
+          </form>
         </label>
+
         </div>
 
         {/* <Button  className='btn-block' type='button'> category </Button> } */}
