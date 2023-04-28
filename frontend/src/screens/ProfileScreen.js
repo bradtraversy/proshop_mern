@@ -65,11 +65,12 @@ const ProfileScreen = ({ location, history }) => {
         {message && <Message variant="danger">{message}</Message>}
         {}
         {success && <Message variant="success">Profile Updated</Message>}
-        {loading ? (
-          <Loader />
-        ) : error ? (
-          <Message variant="danger">{error}</Message>
-        ) : (
+
+        {loading && <Loader />}
+
+        {!loading && error && <Message variant="danger">{error}</Message>}
+
+        {!loading && !error && (
           <Form onSubmit={submitHandler}>
             <Form.Group controlId="name">
               <Form.Label>Name</Form.Label>
@@ -119,11 +120,14 @@ const ProfileScreen = ({ location, history }) => {
       </Col>
       <Col md={9}>
         <h2>My Orders</h2>
-        {loadingOrders ? (
-          <Loader />
-        ) : errorOrders ? (
+
+        {loadingOrders && <Loader />}
+
+        {!loadingOrders && errorOrders && (
           <Message variant="danger">{errorOrders}</Message>
-        ) : (
+        )}
+
+        {!loadingOrders && !errorOrders && (
           <Table striped bordered hover responsive className="table-sm">
             <thead>
               <tr>

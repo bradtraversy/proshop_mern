@@ -4,6 +4,7 @@ import { Route, BrowserRouter as Router } from 'react-router-dom';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import CartScreen from './screens/CartScreen';
+import ContactScreen from './screens/ContactScreen';
 import HomeScreen from './screens/HomeScreen';
 import LoginRedirect from './screens/LoginRedirect';
 import LoginScreen from './screens/LoginScreen';
@@ -54,6 +55,7 @@ const App = () => {
             component={HomeScreen}
             exact
           />
+          <Route path="/contact-us" component={ContactScreen} exact />
           <Route path="/" component={HomeScreen} exact />
           <Route path="/callback" component={LoginRedirect} />
         </Container>
