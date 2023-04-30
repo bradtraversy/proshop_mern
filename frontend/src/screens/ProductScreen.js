@@ -10,7 +10,10 @@ import {
   listProductDetails,
   createProductReview,
 } from '../actions/productActions'
-import { PRODUCT_CREATE_REVIEW_RESET } from '../constants/productConstants'
+import {
+  PRODUCT_CREATE_REVIEW_RESET,
+  PRODUCT_UPDATE_STOCK_RESET,
+} from '../constants/productConstants'
 
 const ProductScreen = ({ history, match }) => {
   const [qty, setQty] = useState(1)
@@ -18,6 +21,9 @@ const ProductScreen = ({ history, match }) => {
   const [comment, setComment] = useState('')
 
   const dispatch = useDispatch()
+
+  const productUpdateStock = useSelector((state) => state.productUpdateStock)
+  const { success: successStockUpdate } = productUpdateStock
 
   const productDetails = useSelector((state) => state.productDetails)
   const { loading, error, product } = productDetails
@@ -33,15 +39,19 @@ const ProductScreen = ({ history, match }) => {
   } = productReviewCreate
 
   useEffect(() => {
+    if (successStockUpdate) {
+      dispatch({ type: PRODUCT_UPDATE_STOCK_RESET })
+    }
+
     if (successProductReview) {
       setRating(0)
       setComment('')
     }
     if (!product._id || product._id !== match.params.id) {
-      dispatch(listProductDetails(match.params.id))
       dispatch({ type: PRODUCT_CREATE_REVIEW_RESET })
     }
-  }, [dispatch, match, successProductReview])
+    dispatch(listProductDetails(match.params.id))
+  }, [dispatch, match, successProductReview, product._id, successStockUpdate])
 
   const addToCartHandler = () => {
     history.push(`/cart/${match.params.id}?qty=${qty}`)

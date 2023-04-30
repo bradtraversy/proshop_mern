@@ -29,5 +29,14 @@
   "devDependencies": {
     "concurrently": "^5.3.0",
     "nodemon": "^2.0.4"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pablets/proshop_mern.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/Pablets/proshop_mern/issues"
+  },
+  "homepage": "https://github.com/Pablets/proshop_mern#readme"
 }
