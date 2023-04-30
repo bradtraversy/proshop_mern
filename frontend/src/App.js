@@ -1,23 +1,25 @@
 import React from 'react'
-import { BrowserRouter as Router, Route } from 'react-router-dom'
 import { Container } from 'react-bootstrap'
-import Header from './components/Header'
+import { Route, BrowserRouter as Router } from 'react-router-dom'
 import Footer from './components/Footer'
-import HomeScreen from './screens/HomeScreen'
-import ProductScreen from './screens/ProductScreen'
+import Header from './components/Header'
 import CartScreen from './screens/CartScreen'
+import ContactScreen from './screens/ContactScreen'
+import HomeScreen from './screens/HomeScreen'
+import LaterScreen from './screens/LaterScreen'
+import LoginRedirect from './screens/LoginRedirect'
 import LoginScreen from './screens/LoginScreen'
-import RegisterScreen from './screens/RegisterScreen'
-import ProfileScreen from './screens/ProfileScreen'
-import ShippingScreen from './screens/ShippingScreen'
+import OrderListScreen from './screens/OrderListScreen'
+import OrderScreen from './screens/OrderScreen'
 import PaymentScreen from './screens/PaymentScreen'
 import PlaceOrderScreen from './screens/PlaceOrderScreen'
-import OrderScreen from './screens/OrderScreen'
-import UserListScreen from './screens/UserListScreen'
-import UserEditScreen from './screens/UserEditScreen'
-import ProductListScreen from './screens/ProductListScreen'
 import ProductEditScreen from './screens/ProductEditScreen'
-import OrderListScreen from './screens/OrderListScreen'
+import ProductListScreen from './screens/ProductListScreen'
+import ProductScreen from './screens/ProductScreen'
+import ProfileScreen from './screens/ProfileScreen'
+import ShippingScreen from './screens/ShippingScreen'
+import UserEditScreen from './screens/UserEditScreen'
+import UserListScreen from './screens/UserListScreen'
 
 const App = () => {
   return (
@@ -30,12 +32,12 @@ const App = () => {
           <Route path='/payment' component={PaymentScreen} />
           <Route path='/placeorder' component={PlaceOrderScreen} />
           <Route path='/login' component={LoginScreen} />
-          <Route path='/register' component={RegisterScreen} />
           <Route path='/profile' component={ProfileScreen} />
           <Route path='/product/:id' component={ProductScreen} />
           <Route path='/cart/:id?' component={CartScreen} />
           <Route path='/admin/userlist' component={UserListScreen} />
           <Route path='/admin/user/:id/edit' component={UserEditScreen} />
+          <Route path='/later/:id?' component={LaterScreen} />
           <Route
             path='/admin/productlist'
             component={ProductListScreen}
@@ -55,7 +57,10 @@ const App = () => {
             component={HomeScreen}
             exact
           />
+          {/* Add the Contact Us Route to the application*/}
+          <Route path='/contact-us' component={ContactScreen} exact />
           <Route path='/' component={HomeScreen} exact />
+          <Route path='/callback' component={LoginRedirect} />
         </Container>
       </main>
       <Footer />
