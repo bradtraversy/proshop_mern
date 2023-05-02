@@ -90,7 +90,9 @@ const HomeScreen = ({ match }) => {
                 {categories.map((category) => (
                   <option key={category} value={category}>
                     {category}
-                    {/* iterates through every category fro the dynamic set and makes them options for drop down menu  */}
+                    {/* iterates through every category fro the dynamic set and makes them options for drop down menu 
+                      
+                    */}
                   </option>
                 ))}
               </select>
