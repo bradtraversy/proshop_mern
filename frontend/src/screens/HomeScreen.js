@@ -91,7 +91,7 @@ const HomeScreen = ({ match }) => {
                   <option key={category} value={category}>
                     {category}
                     {/* iterates through every category fro the dynamic set and makes them options for drop down menu 
-                      
+                      (trying to fix my git commits like the titles)
                     */}
                   </option>
                 ))}
