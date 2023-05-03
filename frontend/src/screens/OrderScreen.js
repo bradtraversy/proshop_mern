@@ -16,7 +16,6 @@ import {
   ORDER_PAY_RESET,
 } from '../constants/orderConstants';
 
-
 const OrderScreen = ({ match, history }) => {
   const orderId = match.params.id;
 
@@ -79,10 +78,10 @@ const OrderScreen = ({ match, history }) => {
         setSdkReady(true);
       }
     }
-  }, [dispatch, orderId, successPay, successDeliver, order]);
+  }, [dispatch, orderId, successPay, successDeliver, order, history, userInfo])
 
   const successPaymentHandler = (paymentResult) => {
-    console.log(paymentResult);
+    // console.log(paymentResult);
     dispatch(payOrder(orderId, paymentResult));
   };
 

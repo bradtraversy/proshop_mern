@@ -4,7 +4,9 @@
   "description": "MERN shopping cart app",
   "main": "server.js",
   "type": "module",
+  "repository": "https://github.com/Brian-Pob/swe2_proshop_mern",
   "scripts": {
+    "build": "webpack",
     "start": "node backend/server",
     "server": "nodemon backend/server",
     "client": "npm start --prefix frontend",
@@ -18,18 +20,22 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "colors": "^1.4.0",
+    "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-async-handler": "^1.1.4",
     "jsonwebtoken": "^8.5.1",
+    "mailgun-js": "^0.22.0",
     "mongoose": "^5.10.6",
     "morgan": "^1.10.0",
     "multer": "^1.4.2",
     "react-share": "^4.4.1",
     "react-web-share": "^2.0.2"
+    "nodemailer": "^6.9.1"
   },
   "devDependencies": {
     "concurrently": "^5.3.0",
-    "nodemon": "^2.0.4"
+    "nodemon": "^2.0.4",
+    "webpack": "4.42.0"
   }
 }

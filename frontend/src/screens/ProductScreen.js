@@ -45,12 +45,15 @@ const ProductScreen = ({ history, match }) => {
       dispatch(listProductDetails(match.params.id))
       dispatch({ type: PRODUCT_CREATE_REVIEW_RESET })
     }
-  }, [dispatch, match, successProductReview])
+  }, [dispatch, match, successProductReview, product._id])
 
   const addToCartHandler = () => {
     history.push(`/cart/${match.params.id}?qty=${qty}`)
   }
 
+  const saveForLaterHandler = () => {
+    history.push(`/later/${match.params.id}?qty=${qty}`)
+  }
 
   const submitHandler = (e) => {
     e.preventDefault()
@@ -159,6 +162,14 @@ const ProductScreen = ({ history, match }) => {
                       disabled={product.countInStock === 0}
                     >
                       Add To Cart
+                    </Button>
+                    <Button
+                      onClick={saveForLaterHandler}
+                      className='btn-block'
+                      type='button'
+                      disabled={product.countInStock === 0}
+                    >
+                      Save for later
                     </Button>
                   </ListGroup.Item>
                   {/* button added to share */}
