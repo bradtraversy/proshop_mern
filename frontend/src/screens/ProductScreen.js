@@ -11,11 +11,15 @@ import {
   createProductReview,
 } from '../actions/productActions'
 import { PRODUCT_CREATE_REVIEW_RESET } from '../constants/productConstants'
+import { FacebookShareButton } from 'react-share'
+import SharePopup from '../components/SharePopup'
+
 
 const ProductScreen = ({ history, match }) => {
   const [qty, setQty] = useState(1)
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
+  const [sharePopup, setSharePopup] = useState(false) // default to false (no popup)
 
   const dispatch = useDispatch()
 
@@ -41,10 +45,14 @@ const ProductScreen = ({ history, match }) => {
       dispatch(listProductDetails(match.params.id))
       dispatch({ type: PRODUCT_CREATE_REVIEW_RESET })
     }
-  }, [dispatch, match, successProductReview])
+  }, [dispatch, match, successProductReview, product._id])
 
   const addToCartHandler = () => {
     history.push(`/cart/${match.params.id}?qty=${qty}`)
+  }
+
+  const saveForLaterHandler = () => {
+    history.push(`/later/${match.params.id}?qty=${qty}`)
   }
 
   const submitHandler = (e) => {
@@ -57,38 +65,50 @@ const ProductScreen = ({ history, match }) => {
     )
   }
 
-  return (
+  
+  if(loading) return(
+    <>
+      <Link className='btn btn-light my-3' to='/'>
+          Go Back
+      </Link>
+      <Loader/>
+    </>
+  ) 
+  if(error) return(
     <>
       <Link className='btn btn-light my-3' to='/'>
         Go Back
       </Link>
-      {loading ? (
-        <Loader />
-      ) : error ? (
-        <Message variant='danger'>{error}</Message>
-      ) : (
-        <>
-          <Meta title={product.name} />
-          <Row>
-            <Col md={6}>
-              <Image src={product.image} alt={product.name} fluid />
-            </Col>
-            <Col md={3}>
-              <ListGroup variant='flush'>
-                <ListGroup.Item>
-                  <h3>{product.name}</h3>
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <Rating
-                    value={product.rating}
-                    text={`${product.numReviews} reviews`}
-                  />
-                </ListGroup.Item>
-                <ListGroup.Item>Price: ${product.price}</ListGroup.Item>
-                <ListGroup.Item>
-                  Description: {product.description}
-                </ListGroup.Item>
-              </ListGroup>
+      <Message variant='danger'>{error}</Message>
+    </>
+  )
+      
+  return(
+    <>
+      <Link className='btn btn-light my-3' to='/'>
+        Go Back
+      </Link>
+      <Meta title={product.name} />
+        <Row>
+          <Col md={6}>
+            <Image src={product.image} alt={product.name} fluid />
+          </Col>
+          <Col md={3}>
+          <ListGroup variant='flush'>
+            <ListGroup.Item>
+              <h3>{product.name}</h3>
+            </ListGroup.Item>
+            <ListGroup.Item>
+              <Rating
+                value={product.rating}
+                text={`${product.numReviews} reviews`}
+              />
+              </ListGroup.Item>
+              <ListGroup.Item>Price: ${product.price}</ListGroup.Item>
+              <ListGroup.Item>
+                Description: {product.description}
+              </ListGroup.Item>
+            </ListGroup>
             </Col>
             <Col md={3}>
               <Card>
@@ -143,7 +163,31 @@ const ProductScreen = ({ history, match }) => {
                     >
                       Add To Cart
                     </Button>
+                    <Button
+                      onClick={saveForLaterHandler}
+                      className='btn-block'
+                      type='button'
+                      disabled={product.countInStock === 0}
+                    >
+                      Save for later
+                    </Button>
                   </ListGroup.Item>
+                  {/* button added to share */}
+                  <ListGroup.Item>
+                    <Button 
+                      className='btn-block' 
+                      type='button' 
+                      onClick={() => setSharePopup(true)} // on click show SharePopup
+                    >
+                      Share
+                      <i class="fa fa-share-alt" aria-hidden="true"></i>
+                    </Button>
+                    {/* sharePopup in trigger is a bool, will turn true on click of share button and show this component */}
+                    {/* link gives the current url, unique for each product, set trigger allows us to close the popup with the x button */}
+                    <SharePopup trigger={sharePopup} setTrigger={setSharePopup} link={window.location.href}>
+                    </SharePopup>
+                  </ListGroup.Item>
+
                 </ListGroup>
               </Card>
             </Col>
@@ -216,9 +260,7 @@ const ProductScreen = ({ history, match }) => {
             </Col>
           </Row>
         </>
-      )}
-    </>
-  )
+      )
 }
 
 export default ProductScreen
