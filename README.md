@@ -3,6 +3,7 @@
 > eCommerce platform built with the MERN stack & Redux.
 
 ### THIS PROJECT IS DEPRECATED
+
 This project is no longer supported. The new project/course has been released. The code has been cleaned up and now uses Redux Toolkit. You can find the new version [HERE](https://github.com/bradtraversy/proshop-v2)
 
 ![screenshot](https://github.com/bradtraversy/proshop_mern/blob/master/uploads/Screen%20Shot%202020-09-29%20at%205.50.52%20PM.png)
@@ -24,6 +25,7 @@ This project is no longer supported. The new project/course has been released. T
 - Database seeder (products & users)
 
 ## Note on Issues
+
 Please do not post issues here that are related to your own code when taking the course. Add those in the Udemy Q/A. If you clone THIS repo and there are issues, then you can submit
 
 ## Usage
@@ -101,7 +103,6 @@ jane@example.com (Customer)
 123456
 ```
 
-
 ## License
 
 The MIT License
@@ -125,3 +126,5 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+HELLO I AM ARAVIND
