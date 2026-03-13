@@ -1,62 +1,106 @@
 import asyncHandler from 'express-async-handler'
+import mongoose from 'mongoose'
 import Product from '../models/productModel.js'
 
-// @desc    Fetch all products
-// @route   GET /api/products
-// @access  Public
-const getProducts = asyncHandler(async (req, res) => {
-  const pageSize = 10
-  const page = Number(req.query.pageNumber) || 1
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-  const keyword = req.query.keyword
-    ? {
-        name: {
-          $regex: req.query.keyword,
-          $options: 'i',
-        },
-      }
+const PAGE_SIZE = 10
+const TOP_PRODUCTS_LIMIT = 3
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Validates a MongoDB ObjectId and throws a 400 error if invalid.
+ * Prevents unnecessary DB queries for malformed IDs.
+ */
+const validateObjectId = (id, res) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400)
+    throw new Error('Invalid product ID format')
+  }
+}
+
+/**
+ * Finds a product by ID or throws a 404 error.
+ * Centralizes the repeated find-or-throw pattern across handlers.
+ */
+const findProductOrFail = async (id, res) => {
+  const product = await Product.findById(id)
+  if (!product) {
+    res.status(404)
+    throw new Error('Product not found')
+  }
+  return product
+}
+
+// ─── Controllers ──────────────────────────────────────────────────────────────
+
+/**
+ * @desc    Fetch all products with optional keyword search and pagination
+ * @route   GET /api/products?keyword=<string>&pageNumber=<number>
+ * @access  Public
+ */
+const getProducts = asyncHandler(async (req, res) => {
+  const page = Math.max(1, Number(req.query.pageNumber) || 1) // Ensure page is at least 1
+
+  // Build a case-insensitive regex filter if a keyword is provided
+  const keyword = req.query.keyword?.trim()
+  const filter = keyword
+    ? { name: { $regex: keyword, $options: 'i' } }
     : {}
 
-  const count = await Product.countDocuments({ ...keyword })
-  const products = await Product.find({ ...keyword })
-    .limit(pageSize)
-    .skip(pageSize * (page - 1))
+  // Run count and fetch in parallel for better performance
+  const [count, products] = await Promise.all([
+    Product.countDocuments(filter),
+    Product.find(filter)
+      .limit(PAGE_SIZE)
+      .skip(PAGE_SIZE * (page - 1))
+      .lean(), // .lean() returns plain JS objects — faster when you don't need Mongoose methods
+  ])
 
-  res.json({ products, page, pages: Math.ceil(count / pageSize) })
+  res.json({
+    products,
+    page,
+    pages: Math.ceil(count / PAGE_SIZE),
+    total: count, // Useful for frontend pagination UIs
+  })
 })
 
-// @desc    Fetch single product
-// @route   GET /api/products/:id
-// @access  Public
+/**
+ * @desc    Fetch a single product by ID
+ * @route   GET /api/products/:id
+ * @access  Public
+ */
 const getProductById = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id)
-
-  if (product) {
-    res.json(product)
-  } else {
-    res.status(404)
-    throw new Error('Product not found')
-  }
+  validateObjectId(req.params.id, res)
+  const product = await findProductOrFail(req.params.id, res)
+  res.json(product)
 })
 
-// @desc    Delete a product
-// @route   DELETE /api/products/:id
-// @access  Private/Admin
+/**
+ * @desc    Delete a product by ID
+ * @route   DELETE /api/products/:id
+ * @access  Private/Admin
+ */
 const deleteProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id)
+  validateObjectId(req.params.id, res)
 
-  if (product) {
-    await product.remove()
-    res.json({ message: 'Product removed' })
-  } else {
+  // findByIdAndDelete is atomic and avoids the extra find + remove round-trip
+  const product = await Product.findByIdAndDelete(req.params.id)
+
+  if (!product) {
     res.status(404)
     throw new Error('Product not found')
   }
+
+  res.json({ message: 'Product removed successfully' })
 })
 
-// @desc    Create a product
-// @route   POST /api/products
-// @access  Private/Admin
+/**
+ * @desc    Create a new product with placeholder/sample data
+ * @route   POST /api/products
+ * @access  Private/Admin
+ */
 const createProduct = asyncHandler(async (req, res) => {
   const product = new Product({
     name: 'Sample name',
@@ -74,88 +118,102 @@ const createProduct = asyncHandler(async (req, res) => {
   res.status(201).json(createdProduct)
 })
 
-// @desc    Update a product
-// @route   PUT /api/products/:id
-// @access  Private/Admin
+/**
+ * @desc    Update an existing product by ID
+ * @route   PUT /api/products/:id
+ * @access  Private/Admin
+ */
 const updateProduct = asyncHandler(async (req, res) => {
-  const {
-    name,
-    price,
-    description,
-    image,
-    brand,
-    category,
-    countInStock,
-  } = req.body
+  validateObjectId(req.params.id, res)
 
-  const product = await Product.findById(req.params.id)
+  // Whitelist only the fields that are allowed to be updated
+  const allowedFields = ['name', 'price', 'description', 'image', 'brand', 'category', 'countInStock']
+  const updates = {}
+  for (const field of allowedFields) {
+    if (req.body[field] !== undefined) {
+      updates[field] = req.body[field]
+    }
+  }
 
-  if (product) {
-    product.name = name
-    product.price = price
-    product.description = description
-    product.image = image
-    product.brand = brand
-    product.category = category
-    product.countInStock = countInStock
+  // findByIdAndUpdate with { new: true } returns the updated document directly
+  const updatedProduct = await Product.findByIdAndUpdate(
+    req.params.id,
+    { $set: updates },
+    { new: true, runValidators: true } // runValidators ensures schema rules are enforced
+  )
 
-    const updatedProduct = await product.save()
-    res.json(updatedProduct)
-  } else {
+  if (!updatedProduct) {
     res.status(404)
     throw new Error('Product not found')
   }
+
+  res.json(updatedProduct)
 })
 
-// @desc    Create new review
-// @route   POST /api/products/:id/reviews
-// @access  Private
+/**
+ * @desc    Submit a review for a product
+ * @route   POST /api/products/:id/reviews
+ * @access  Private
+ */
 const createProductReview = asyncHandler(async (req, res) => {
+  validateObjectId(req.params.id, res)
+
   const { rating, comment } = req.body
 
-  const product = await Product.findById(req.params.id)
-
-  if (product) {
-    const alreadyReviewed = product.reviews.find(
-      (r) => r.user.toString() === req.user._id.toString()
-    )
-
-    if (alreadyReviewed) {
-      res.status(400)
-      throw new Error('Product already reviewed')
-    }
-
-    const review = {
-      name: req.user.name,
-      rating: Number(rating),
-      comment,
-      user: req.user._id,
-    }
-
-    product.reviews.push(review)
-
-    product.numReviews = product.reviews.length
-
-    product.rating =
-      product.reviews.reduce((acc, item) => item.rating + acc, 0) /
-      product.reviews.length
-
-    await product.save()
-    res.status(201).json({ message: 'Review added' })
-  } else {
-    res.status(404)
-    throw new Error('Product not found')
+  // Basic input validation before hitting the database
+  if (!rating || !comment?.trim()) {
+    res.status(400)
+    throw new Error('Rating and comment are required')
   }
+
+  const parsedRating = Number(rating)
+  if (isNaN(parsedRating) || parsedRating < 1 || parsedRating > 5) {
+    res.status(400)
+    throw new Error('Rating must be a number between 1 and 5')
+  }
+
+  const product = await findProductOrFail(req.params.id, res)
+
+  // Prevent the same user from reviewing the same product twice
+  const alreadyReviewed = product.reviews.some(
+    (r) => r.user.toString() === req.user._id.toString()
+  )
+  if (alreadyReviewed) {
+    res.status(400)
+    throw new Error('You have already reviewed this product')
+  }
+
+  product.reviews.push({
+    name: req.user.name,
+    rating: parsedRating,
+    comment: comment.trim(),
+    user: req.user._id,
+  })
+
+  // Recalculate aggregate review stats
+  product.numReviews = product.reviews.length
+  product.rating =
+    product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length
+
+  await product.save()
+  res.status(201).json({ message: 'Review added successfully' })
 })
 
-// @desc    Get top rated products
-// @route   GET /api/products/top
-// @access  Public
+/**
+ * @desc    Get the top-rated products
+ * @route   GET /api/products/top
+ * @access  Public
+ */
 const getTopProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find({}).sort({ rating: -1 }).limit(3)
+  const products = await Product.find({})
+    .sort({ rating: -1 })
+    .limit(TOP_PRODUCTS_LIMIT)
+    .lean() // No need for Mongoose document methods here
 
   res.json(products)
 })
+
+// ─── Exports ──────────────────────────────────────────────────────────────────
 
 export {
   getProducts,
