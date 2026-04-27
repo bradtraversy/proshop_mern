@@ -41,10 +41,15 @@ Create a `.env` file in the root directory:
 
 ```
 NODE_ENV=development
-PORT=5000
+PORT=3000
 MONGO_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
 PAYPAL_CLIENT_ID=your_paypal_client_id
+```
+
+## Install frontend part
+```bash
+cd frontend && npm install && npm run build
 ```
 
 ## Architecture

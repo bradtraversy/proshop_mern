@@ -12,3 +12,7 @@
 - Redux action shape
 - Adding npm install
 - Secrets & Env Safety
+
+### Start project
+![img.png](img.png)
+I was able to run project on my local machine.
