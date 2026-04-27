@@ -16,3 +16,9 @@
 ### Start project
 ![img.png](img.png)
 I was able to run project on my local machine.
+
+### Fixing issues
+
+https://github.com/galillei/proshop_mern/commit/c48abc247434f8b1ea79e73d54b5130454f07cea
+https://github.com/galillei/proshop_mern/commit/c48abc247434f8b1ea79e73d54b5130454f07cea
+
