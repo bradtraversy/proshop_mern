@@ -1,0 +1,67 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: proshop-mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', 'db.adminCommand("ping")']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  seeder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGO_URI: mongodb://mongo:27017/proshop
+    command: ['node', 'backend/seeder.js']
+    restart: 'no'
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: proshop-backend
+    depends_on:
+      mongo:
+        condition: service_healthy
+      seeder:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      MONGO_URI: mongodb://mongo:27017/proshop
+      JWT_SECRET: ${JWT_SECRET:-replace_with_local_dev_secret}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-your_paypal_sandbox_client_id}
+    ports:
+      - '5001:5000'
+    volumes:
+      - ./backend:/app/backend
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: proshop-frontend
+    depends_on:
+      - backend
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
