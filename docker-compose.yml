@@ -27,10 +27,8 @@ services:
     restart: unless-stopped
     ports:
       - '3000:3000'
-    env_file:
-      - .env
     environment:
-      - CHOKIDAR_USEPOLLING=true
+      - VITE_API_URL=http://backend:5000
     depends_on:
       - backend
 
