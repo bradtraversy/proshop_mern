@@ -1,5 +1,7 @@
 # Copilot Instructions — ProShop MERN
 
+## Design rules: see ./DESIGN.md
+
 ## 1. Overview
 
 ProShop is a full-stack e-commerce application built on the MERN stack (MongoDB, Express, React, Node.js). It supports product browsing with search and pagination, user authentication with JWT, shopping cart, PayPal checkout, product reviews, and an admin panel for managing users, products, and orders. The backend serves a REST API consumed by a React/Redux single-page application. Originally authored by Brad Traversy as a course project; deployed on Heroku.
@@ -8,16 +10,17 @@ ProShop is a full-stack e-commerce application built on the MERN stack (MongoDB,
 
 | Layer         | Technology                      | Version     |
 |---------------|---------------------------------|-------------|
-| Runtime       | Node.js                         | ≥12         |
+| Runtime       | Node.js                         | ≥18         |
 | Backend       | Express                         | ^4.17       |
 | Database      | MongoDB + Mongoose              | ^5.10       |
 | Auth          | jsonwebtoken + bcryptjs         | ^8.5 / ^2.4 |
 | Upload        | Multer                          | ^1.4        |
-| Frontend      | React (CRA)                     | ^16.13      |
-| State         | Redux + Redux Thunk             | ^4.0 / ^2.3 |
-| UI            | React-Bootstrap                 | ^1.3        |
-| Routing       | React Router DOM v5             | ^5.2        |
-| HTTP          | Axios                           | ^0.20       |
+| Frontend      | React (Vite)                    | ^18.3       |
+| State         | Redux + Redux Thunk             | ^4.2 / ^2.4 |
+| UI            | Tailwind CSS v4 + shadcn/ui     | ^4.0        |
+| Icons         | Lucide React                    | ^0.468      |
+| Routing       | React Router DOM v5             | ^5.3        |
+| HTTP          | Axios                           | ^1.7        |
 | Module system | ES Modules (`"type": "module"`) | —           |
 
 ## 3. Architecture
