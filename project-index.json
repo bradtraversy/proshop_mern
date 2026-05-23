@@ -1,0 +1,560 @@
+{
+  "name": "proshop_mern",
+  "type": "fullstack-monorepo",
+  "description": "MERN e-commerce study project (ProShop fork) extended with MCP feature-flag server, MCP RAG search, frontend feature-flags layer, and n8n AutoPilot integration (course modules M3-M5).",
+  "tech_stack": {
+    "runtime": "Node 22 (ESM)",
+    "backend": "Express 4 + Mongoose 5",
+    "database": "MongoDB 7",
+    "frontend": "React 16.13 (CRA react-scripts 3.4.3) + Redux 4 + redux-thunk + React Router 5 + React Bootstrap",
+    "mcp_sdk": "@modelcontextprotocol/sdk ^1.29",
+    "vector_db": "Qdrant 1.14",
+    "embeddings": "Cohere embed-multilingual-v3.0 (1024d)",
+    "payments": "PayPal Sandbox (react-paypal-button-v2)",
+    "auth": "JWT (HS256, 30d) + bcryptjs",
+    "uploads": "multer",
+    "integrations": "n8n webhook (Cloudflare tunnel for ephemeral URLs)"
+  },
+  "subprojects": {
+    "backend": {
+      "path": "backend/",
+      "description": "Express REST API + Mongoose models + JWT auth + multer uploads + feature-flag read API + n8n proxy.",
+      "entry": "backend/server.js",
+      "tech": "Express 4, Mongoose 5, ESM",
+      "key_paths": {
+        "controllers": "backend/controllers/",
+        "routes": "backend/routes/",
+        "middleware": "backend/middleware/",
+        "models": "backend/models/",
+        "utils": "backend/utils/",
+        "config": "backend/config/db.js",
+        "feature_flag_store": "backend/features.json",
+        "seeder": "backend/seeder.js"
+      }
+    },
+    "frontend": {
+      "path": "frontend/",
+      "description": "Create React App + Redux store. Cart in localStorage, JWT in localStorage, feature flags in Redux, traffic bucket in sessionStorage.",
+      "entry": "frontend/src/index.js",
+      "tech": "React 16.13, Redux 4, react-scripts 3.4.3",
+      "key_paths": {
+        "screens": "frontend/src/screens/",
+        "components": "frontend/src/components/",
+        "actions": "frontend/src/actions/",
+        "reducers": "frontend/src/reducers/",
+        "hooks": "frontend/src/hooks/",
+        "feature_flag_hook": "frontend/src/hooks/useFeatureEnabled.js",
+        "proxy_setup": "frontend/src/setupProxy.js"
+      }
+    },
+    "mcp-features": {
+      "path": "mcp-features/",
+      "description": "MCP server exposing 4 tools + 1 resource over backend/features.json. Dual transport: stdio (local Claude Code/Cursor) and StreamableHTTP (Docker + Cloudflare tunnel for n8n access).",
+      "entry": "mcp-features/index.js",
+      "tech": "@modelcontextprotocol/sdk, express, zod",
+      "key_paths": {
+        "server": "mcp-features/index.js",
+        "dockerfile": "mcp-features/Dockerfile"
+      },
+      "transports": [
+        "stdio",
+        "streamable-http"
+      ],
+      "auth": {
+        "stdio": "none (trusted env)",
+        "http": "Bearer MCP_BEARER_TOKEN (fail-open if empty — Stage3 SEC HIGH)"
+      }
+    },
+    "mcp-rag": {
+      "path": "mcp-rag/",
+      "description": "MCP server for semantic search over project-data/ markdown. Uses Cohere embeddings (multilingual) and Qdrant vector DB. stdio-only.",
+      "entry": "mcp-rag/index.js",
+      "tech": "@modelcontextprotocol/sdk, @qdrant/js-client-rest, cohere-ai, zod, dotenv",
+      "key_paths": {
+        "server": "mcp-rag/index.js",
+        "ingest": "mcp-rag/ingest.js",
+        "chunks_dump": "mcp-rag/chunks.jsonl"
+      },
+      "reindex_command": "cd mcp-rag && node ingest.js"
+    },
+    "project-data": {
+      "path": "project-data/",
+      "description": "RAG-indexed living documentation. Source of truth for the proshop-rag MCP server.",
+      "key_paths": {
+        "architecture": "project-data/architecture.md",
+        "adrs": "project-data/adrs/",
+        "api": "project-data/api/",
+        "features": "project-data/features/",
+        "incidents": "project-data/incidents/",
+        "pages": "project-data/pages/",
+        "runbooks": "project-data/runbooks/",
+        "feature_flags_spec": "project-data/feature-flags-spec.md",
+        "mcp_design": "project-data/mcp-design-principles.md",
+        "mcp_rag_spec": "project-data/mcp-rag-project-data.md",
+        "best_practices": "project-data/best-practices.md",
+        "dev_history": "project-data/dev-history.md",
+        "glossary": "project-data/glossary.md"
+      }
+    }
+  },
+  "system_folders": {
+    "uploads/": "User-uploaded product / review images (multer static serve).",
+    "docs-archived-2026-05-23/": "Historical docs/ folder, archived in M6 stage1. Read-only — do not modify.",
+    "homework/": "Course homework deliverables (M4, M5, M6 stage1-3).",
+    "homework/M6/stage1-code-review/": "Multi-mate code review baseline (security + performance + architecture + synthesis).",
+    "homework/M6/stage2-fix-top3/": "Top-3 fixes (feature-flag store, order endpoint, auth on integration routes) + characterization tests.",
+    "homework/M6/stage3-living-docs/": "Stage3 living documentation pack (docs audit, plan, specs, docs-new, proposed ADRs, synthesis).",
+    ".claude/agents/": "Agent role definitions (security-mate, performance-mate, architecture-mate, legacy-auditor-mate, test-writer-mate, n8n-*).",
+    ".claude/scripts/": "Maintenance scripts (update_project_index.py — refreshes filesystem_tree)."
+  },
+  "root_files": {
+    "CLAUDE.md": "Project conventions, commands, MCP/RAG/feature-flag overview, MR review checklist. Authoritative.",
+    "DESIGN.md": "Design system + anti-AI-slop guards. Required reading before any frontend work.",
+    "README.md": "Quickstart + setup.",
+    "FINDINGS.md": "Early M0/M1 findings table (historical, superseded by M6 stage1/2).",
+    "indexation-and-onboarding.md": "C4 diagram generation prompt (M4 artifact, misnamed).",
+    "package.json": "Root Node manifest (backend deps + dev scripts).",
+    "docker-compose.yml": "Compose for backend + frontend + MongoDB + mcp-features + mcp-tunnel.",
+    ".mcp.json": "MCP server registrations (proshop-features stdio, proshop-rag stdio).",
+    ".env.example": "Required env vars template.",
+    "project-index.json": "This file — machine-readable repo map. Auto-updated by .claude/scripts/update_project_index.py."
+  },
+  "hard_rules": [
+    "ALWAYS read project-index.json FIRST at session start.",
+    "All backend imports use .js extension (ESM).",
+    "Run `cd mcp-rag && node ingest.js` after any change to project-data/.",
+    "Never edit project-data/adrs/ numbering — append adr-008+ for new decisions.",
+    "Never edit docs-archived-2026-05-23/ — it is read-only.",
+    "Frontend changes — read DESIGN.md FIRST. DESIGN.md wins over code on visual conflicts.",
+    "Commit messages must start with `COURSE:` prefix.",
+    "Never add `Co-Authored-By: Claude` (global CLAUDE.md rule).",
+    "Feature flags: backend uses isFeatureEnabled() from utils/featureFlag.js, frontend uses useFeatureEnabled() hook — never raw flags.find.",
+    "MCP_BEARER_TOKEN must NOT be empty in Docker HTTP mode (fail-open vulnerability)."
+  ],
+  "ai_routing": {
+    "how does X work in proshop": "search via proshop-rag MCP tool (search_project_docs)",
+    "feature flag operations": "mcp-features MCP server (get_feature_info, set_feature_state, adjust_traffic_rollout, list_features)",
+    "architecture decisions": "project-data/adrs/",
+    "API contracts": "project-data/api/ + homework/M6/stage3-living-docs/docs-new/api/ (featureflags, autopilot)",
+    "module-level specs (M3-M5)": "homework/M6/stage3-living-docs/specs/",
+    "operational procedures": "project-data/runbooks/",
+    "design system": "DESIGN.md",
+    "project conventions": "CLAUDE.md",
+    "Stage1 findings baseline": "homework/M6/stage1-code-review/synthesis.md",
+    "Stage3 delta findings": "homework/M6/stage3-living-docs/synthesis.md"
+  },
+  "adrs": [
+    {
+      "id": "adr-001",
+      "title": "MongoDB vs Postgres",
+      "status": "accepted"
+    },
+    {
+      "id": "adr-002",
+      "title": "Redux vs Context",
+      "status": "accepted (RTK-Query migration noted)"
+    },
+    {
+      "id": "adr-003",
+      "title": "JWT vs Session",
+      "status": "accepted with debt"
+    },
+    {
+      "id": "adr-004",
+      "title": "PayPal vs Stripe",
+      "status": "accepted"
+    },
+    {
+      "id": "adr-005",
+      "title": "Bootstrap vs Tailwind",
+      "status": "accepted"
+    },
+    {
+      "id": "adr-006",
+      "title": "n8n AutoPilot integration",
+      "status": "accepted (partial compliance — see Stage3 ARCH-DELTA-04)"
+    },
+    {
+      "id": "adr-007",
+      "title": "Feature-flag storage and ownership",
+      "status": "accepted (NOT compliant — see Stage3 ARCH-DELTA-01/02/03)"
+    },
+    {
+      "id": "adr-008",
+      "title": "MCP features dual-transport (stdio + StreamableHTTP)",
+      "status": "proposed (homework/M6/stage3-living-docs/proposed-adrs/)"
+    }
+  ],
+  "ports": {
+    "backend": 5001,
+    "mongodb": 27017,
+    "qdrant_http": 6333,
+    "mcp-features_http": 7777,
+    "frontend_dev": 3000
+  },
+  "filesystem_tree": {
+    ".claude/": {
+      "agents/": {
+        "templates/": {
+          "docs-audit.template.md": null
+        },
+        "architecture-mate.md": null,
+        "legacy-auditor-mate.md": null,
+        "n8n-requirements-orchestrator.md": null,
+        "n8n-workflow-builder.md": null,
+        "performance-mate.md": null,
+        "README-n8n.md": null,
+        "README-review.md": null,
+        "security-mate.md": null,
+        "test-writer-mate.md": null
+      },
+      "scripts/": {
+        "update_project_index.py": null,
+        "update_project_index_hook.sh": null
+      },
+      "settings.local.json": null
+    },
+    "backend/": {
+      "config/": {
+        "db.js": null
+      },
+      "controllers/": {
+        "orderController.js": null,
+        "productController.js": null,
+        "userController.js": null
+      },
+      "data/": {
+        "products.js": null,
+        "users.js": null
+      },
+      "middleware/": {
+        "authMiddleware.js": null,
+        "errorMiddleware.js": null
+      },
+      "models/": {
+        "orderModel.js": null,
+        "productModel.js": null,
+        "userModel.js": null
+      },
+      "routes/": {
+        "autopilotRoutes.js": null,
+        "featureFlagRoutes.js": null,
+        "orderRoutes.js": null,
+        "productRoutes.js": null,
+        "uploadRoutes.js": null,
+        "userRoutes.js": null
+      },
+      "utils/": {
+        "featureFlag.js": null,
+        "generateToken.js": null
+      },
+      "features.json": null,
+      "seeder.js": null,
+      "server.js": null
+    },
+    "frontend/": {
+      "public/": {
+        "images/": {
+          "airpods.jpg": null,
+          "alexa.jpg": null,
+          "camera.jpg": null,
+          "mouse.jpg": null,
+          "phone.jpg": null,
+          "playstation.jpg": null,
+          "sample.jpg": null
+        },
+        "favicon.ico": null,
+        "index.html": null,
+        "logo192.png": null,
+        "logo512.png": null,
+        "manifest.json": null,
+        "robots.txt": null
+      },
+      "src/": {
+        "actions/": {
+          "cartActions.js": null,
+          "featureFlagActions.js": null,
+          "orderActions.js": null,
+          "productActions.js": null,
+          "reviewActions.js": null,
+          "userActions.js": null
+        },
+        "assets/": {
+          "checkout-v2.css": null
+        },
+        "components/": {
+          "AutoPilotControls.js": null,
+          "CheckoutStepperV2.js": null,
+          "CheckoutSteps.js": null,
+          "ConfirmModal.js": null,
+          "Footer.js": null,
+          "FormContainer.js": null,
+          "Header.js": null,
+          "Icon.js": null,
+          "Loader.js": null,
+          "Message.js": null,
+          "Meta.js": null,
+          "Paginate.js": null,
+          "Product.js": null,
+          "ProductCarousel.js": null,
+          "Rating.js": null,
+          "SearchBox.js": null
+        },
+        "constants/": {
+          "cartConstants.js": null,
+          "featureFlagConstants.js": null,
+          "orderConstants.js": null,
+          "productConstants.js": null,
+          "reviewConstants.js": null,
+          "userConstants.js": null
+        },
+        "hooks/": {
+          "useDarkMode.js": null,
+          "useFeatureEnabled.js": null
+        },
+        "reducers/": {
+          "cartReducers.js": null,
+          "featureFlagReducers.js": null,
+          "orderReducers.js": null,
+          "productReducers.js": null,
+          "reviewReducers.js": null,
+          "userReducers.js": null
+        },
+        "screens/": {
+          "CartScreen.js": null,
+          "FeatureFlagsScreen.js": null,
+          "HomeScreen.js": null,
+          "LoginScreen.js": null,
+          "MultiStepCheckoutScreen.js": null,
+          "OrderListScreen.js": null,
+          "OrderScreen.js": null,
+          "PaymentScreen.js": null,
+          "PlaceOrderScreen.js": null,
+          "ProductEditScreen.js": null,
+          "ProductListScreen.js": null,
+          "ProductScreen.js": null,
+          "ProfileScreen.js": null,
+          "RegisterScreen.js": null,
+          "ReviewModerationScreen.js": null,
+          "ShippingScreen.js": null,
+          "UserEditScreen.js": null,
+          "UserListScreen.js": null
+        },
+        "styles/": {
+          "components.css": null,
+          "tokens.css": null
+        },
+        "App.js": null,
+        "bootstrap.min.css": null,
+        "index.css": null,
+        "index.js": null,
+        "serviceWorker.js": null,
+        "setupProxy.js": null,
+        "store.js": null
+      },
+      "Dockerfile": null,
+      "package-lock.json": null,
+      "package.json": null,
+      "README.md": null
+    },
+    "homework/": {
+      "M4/": {
+        "cheatsheets/": {
+          "10-vibecoding-best-practices.md": null,
+          "12-signs-of-ai-look.md": null,
+          "pre-flight-checklist.md": null,
+          "prompt-kit-5-templates.md": null
+        },
+        "design-system-pack-example/": {
+          "design-system.css": null,
+          "design-system.json": null,
+          "design-system.md": null,
+          "README.md": null
+        },
+        "prompts/": {
+          "anti-ai-slop-guards.md": null,
+          "ascii-wireframe-lock.md": null,
+          "lovable-bring-your-vibe.md": null,
+          "pixel-perfect-subagent.md": null,
+          "reverse-design-extract.md": null,
+          "screenshot-fix-loop.md": null,
+          "shadcn-component-mapping.md": null,
+          "shadcn-final-implementation.md": null,
+          "shadcn-ux-structure-plan.md": null,
+          "ux-research-question-burst.md": null
+        },
+        "anti-slop-supplement.md": null,
+        "README.md": null
+      },
+      "M5/": {
+        "screencasts/": {
+          "wf1-autopilots-components.mov": null,
+          "wf1-halucinations.mov": null,
+          "wf1-stress-test-reload-UI-after-n8n-changed.mov": null
+        },
+        "screenshots_wf1/": {
+          "photo_2026-05-16 22.34.08.png": null,
+          "photo_2026-05-16 22.35.03.jpeg": null,
+          "photo_2026-05-16 22.35.05.jpeg": null,
+          "photo_2026-05-16 22.35.08.jpeg": null,
+          "photo_2026-05-16 22.42.08.png": null
+        },
+        "screenshots_wf1_cc/": {
+          "Screenshot 2026-05-17 at 10.50.51.png": null
+        },
+        "screenshots_wf2/": {
+          "Screenshot 2026-05-17 at 02.21.51.png": null,
+          "Screenshot 2026-05-17 at 02.22.24.png": null,
+          "Screenshot 2026-05-17 at 02.23.22.png": null,
+          "Screenshot 2026-05-17 at 02.25.34.png": null
+        },
+        "logs.json": null,
+        "README.md": null,
+        "run_simulate_wf1.sh": null,
+        "run_simulate_wf2.sh": null,
+        "simulate_wf1.py": null,
+        "simulate_wf2.py": null,
+        "wf1-manual-trigger-cc.json": null,
+        "wf1-manual-trigger.json": null,
+        "wf1-spec-cc.yaml": null,
+        "wf2-scheduled-monitor.json": null
+      },
+      "M6/": {
+        "stage1-code-review/": {
+          "architecture-findings.jsonl": null,
+          "architecture-review.md": null,
+          "performance-findings.jsonl": null,
+          "performance-review.md": null,
+          "security-findings.jsonl": null,
+          "security-review.md": null,
+          "synthesis.md": null
+        },
+        "stage2-fix-top3/": {
+          "tests/": "...",
+          "fix-1-feature-flag-store.md": null,
+          "fix-2-order-endpoint-hardening.md": null,
+          "fix-3-auth-and-integration-routes.md": null,
+          "jest.config.cjs": null
+        },
+        "stage3-living-docs/": {
+          "docs-archived/": "...",
+          "docs-new/": "...",
+          "proposed-adrs/": "...",
+          "specs/": "...",
+          "00-plan.md": null,
+          "architecture-findings.jsonl": null,
+          "architecture-review.md": null,
+          "CLAUDE-md-diff.md": null,
+          "docs-audit.md": null,
+          "hook-screenshot.jpeg": null,
+          "performance-findings.jsonl": null,
+          "performance-review.md": null,
+          "project-index.json": null,
+          "security-findings.jsonl": null,
+          "security-review.md": null,
+          "synthesis.md": null,
+          "update_project_index.py": null
+        }
+      },
+      "report-M1-3.md": null
+    },
+    "mcp-features/": {
+      "Dockerfile": null,
+      "index.js": null,
+      "package-lock.json": null,
+      "package.json": null
+    },
+    "mcp-rag/": {
+      "chunks.jsonl": null,
+      "index.js": null,
+      "ingest.js": null,
+      "package-lock.json": null,
+      "package.json": null
+    },
+    "project-data/": {
+      "adrs/": {
+        "adr-001-mongodb-vs-postgres.md": null,
+        "adr-002-redux-vs-context.md": null,
+        "adr-003-jwt-vs-session.md": null,
+        "adr-004-paypal-vs-stripe.md": null,
+        "adr-005-bootstrap-vs-tailwind.md": null,
+        "adr-006-n8n-autopilot-integration.md": null,
+        "adr-007-feature-flag-storage-and-ownership.md": null
+      },
+      "api/": {
+        "auth.md": null,
+        "orders.md": null,
+        "products.md": null,
+        "uploads.md": null,
+        "users.md": null
+      },
+      "features/": {
+        "admin.md": null,
+        "auth.md": null,
+        "cart.md": null,
+        "catalog.md": null,
+        "checkout.md": null,
+        "payments.md": null
+      },
+      "incidents/": {
+        "i-001-paypal-double-charge.md": null,
+        "i-002-mongo-connection-pool-exhaustion.md": null,
+        "i-003-jwt-secret-leak.md": null
+      },
+      "pages/": {
+        "admin-orders.md": null,
+        "admin-product-edit.md": null,
+        "admin-products.md": null,
+        "admin-user-edit.md": null,
+        "admin-users.md": null,
+        "cart.md": null,
+        "home.md": null,
+        "INDEX.md": null,
+        "login.md": null,
+        "order.md": null,
+        "payment.md": null,
+        "place-order.md": null,
+        "product.md": null,
+        "profile.md": null,
+        "register.md": null,
+        "shipping.md": null
+      },
+      "runbooks/": {
+        "ab-test-setup.md": null,
+        "db-seed-and-reset.md": null,
+        "deploy.md": null,
+        "feature-flag-toggle.md": null,
+        "incident-response.md": null,
+        "local-setup.md": null
+      },
+      "architecture.md": null,
+      "best-practices.md": null,
+      "dev-history.md": null,
+      "feature-flags-spec.md": null,
+      "features-analysis-ru.md": null,
+      "glossary.md": null,
+      "mcp-design-principles.md": null,
+      "mcp-rag-project-data.md": null
+    },
+    "uploads/": {
+      "file.txt": null,
+      "Screen Shot 2020-09-29 at 5.50.52 PM.png": null
+    },
+    ".dockerignore": null,
+    ".env.example": null,
+    ".gitignore": null,
+    ".mcp.json": null,
+    "CLAUDE.md": null,
+    "DESIGN.md": null,
+    "docker-compose.yml": null,
+    "Dockerfile": null,
+    "FINDINGS.md": null,
+    "indexation-and-onboarding.md": null,
+    "package-lock.json": null,
+    "package.json": null,
+    "Procfile": null,
+    "project-index.json": null,
+    "README.md": null
+  },
+  "last_updated": "2026-05-23T18:15:44Z"
+}
