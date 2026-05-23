@@ -31,3 +31,4 @@ yarn-error.log*
 # qdrant vector data
 docs/rag/qdrant-data/*
 !docs/rag/qdrant-data/.gitkeep
+.stryker-tmp-*/

@@ -27,7 +27,7 @@ import { spawnSync } from 'child_process'
 import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const REPO_ROOT = path.resolve(__dirname, '../..')
+const REPO_ROOT = path.resolve(__dirname, '../../../..')
 const PROJECT_DATA = path.join(REPO_ROOT, 'project-data')
 const FIXTURES_ROOT = path.join(PROJECT_DATA, '__test_fixtures__')
 const INGEST_SRC = path.join(REPO_ROOT, 'mcp-rag', 'ingest.js')
@@ -61,6 +61,12 @@ function cleanupFixtures() {
 // substrings to pin the error-envelope contract.
 const INDEX_SRC_TEXT = fs.readFileSync(INDEX_SRC, 'utf-8')
 const INGEST_SRC_TEXT = fs.readFileSync(INGEST_SRC, 'utf-8')
+
+// Source-regex assertions are useless under Stryker (sources get instrumented).
+// Skip those describes when running inside Stryker sandbox.
+const IS_STRYKER = REPO_ROOT.includes('.stryker-tmp') || !!process.env.STRYKER_MUTATOR_RUNNER
+const describeSrc = IS_STRYKER ? describe.skip : describe
+const testSrc = IS_STRYKER ? test.skip : test
 
 beforeEach(() => { cleanupFixtures() })
 afterAll(() => { cleanupFixtures() })
@@ -316,7 +322,7 @@ describe('ingest.js CLI flags — no Qdrant/Cohere required', () => {
 // pin the externally observable contract by exact substring match. After a
 // refactor, any of these breaking is a deliberate signal.
 
-describe('mcp-rag/index.js — search_project_docs contract pinning', () => {
+describeSrc('mcp-rag/index.js — search_project_docs contract pinning', () => {
   test('exits 1 with a "COHERE_API_KEY is not set" message when the env var is absent', () => {
     const res = spawnSync('node', [INDEX_SRC], {
       cwd: REPO_ROOT,
@@ -398,7 +404,7 @@ describe('mcp-rag/index.js — search_project_docs contract pinning', () => {
   })
 })
 
-describe('mcp-rag/index.js — proshop-docs-index resource contract pinning', () => {
+describeSrc('mcp-rag/index.js — proshop-docs-index resource contract pinning', () => {
   test('resource registered under uri file:///proshop-docs-index with application/json mime', () => {
     expect(INDEX_SRC_TEXT).toMatch(/server\.resource\(\s*'proshop-docs-index'/)
     expect(INDEX_SRC_TEXT).toMatch(/file:\/\/\/proshop-docs-index/)
@@ -433,7 +439,7 @@ describe('mcp-rag/index.js — proshop-docs-index resource contract pinning', ()
 
 // ---------- ingest.js — main() contract pinning ----------------------------
 
-describe('ingest.js main() — collection lifecycle and batch contract', () => {
+describeSrc('ingest.js main() — collection lifecycle and batch contract', () => {
   test('VECTOR_SIZE is 1024 and BATCH_SIZE is 96 — pinning the Cohere v3 embedding dimension', () => {
     expect(INGEST_SRC_TEXT).toMatch(/const VECTOR_SIZE = 1024\b/)
     expect(INGEST_SRC_TEXT).toMatch(/const BATCH_SIZE = 96\b/)
@@ -490,7 +496,7 @@ describe('ingest.js main() — collection lifecycle and batch contract', () => {
 // ---------- Security / robustness ------------------------------------------
 
 describe('Security & robustness', () => {
-  test('query is sent to Cohere as a plain text string — no eval/exec, no template injection', () => {
+  testSrc('query is sent to Cohere as a plain text string — no eval/exec, no template injection', () => {
     // The query goes inside `texts: [query]`. There is no template literal,
     // no `eval`, no `Function(`, no `child_process` use anywhere in index.js.
     expect(INDEX_SRC_TEXT).toMatch(/texts:\s*\[query\]/)
@@ -500,7 +506,7 @@ describe('Security & robustness', () => {
     expect(INDEX_SRC_TEXT).not.toMatch(/exec\(/)
   })
 
-  test('error messages do not leak Cohere API key value (only env-var name)', () => {
+  testSrc('error messages do not leak Cohere API key value (only env-var name)', () => {
     // No `${process.env.COHERE_API_KEY}` anywhere — only the literal string
     // "COHERE_API_KEY" as a hint. Guards against accidental key echoing.
     expect(INDEX_SRC_TEXT).not.toMatch(/\$\{process\.env\.COHERE_API_KEY\}/)
@@ -519,7 +525,7 @@ describe('Security & robustness', () => {
     expect(chunks[0].section).toBe('## Heading')
   })
 
-  test('Qdrant URL hint in SEARCH_FAILED falls back to localhost when QDRANT_URL is unset (no undefined-leak)', () => {
+  testSrc('Qdrant URL hint in SEARCH_FAILED falls back to localhost when QDRANT_URL is unset (no undefined-leak)', () => {
     // ${process.env.QDRANT_URL || 'http://localhost:6333'} — undefined never appears.
     expect(INDEX_SRC_TEXT).toMatch(
       /\$\{process\.env\.QDRANT_URL \|\| 'http:\/\/localhost:6333'\}/,

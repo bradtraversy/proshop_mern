@@ -27,7 +27,7 @@ import { spawn } from 'child_process'
 import { setTimeout as delay } from 'timers/promises'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const REPO_ROOT = path.resolve(__dirname, '../..')
+const REPO_ROOT = path.resolve(__dirname, '../../../..')
 const FEATURES_PATH = path.join(REPO_ROOT, 'backend', 'features.json')
 const SERVER_ENTRY = path.join(REPO_ROOT, 'mcp-features', 'index.js')
 

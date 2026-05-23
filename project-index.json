@@ -454,25 +454,27 @@
           "security-review.md": null,
           "synthesis.md": null,
           "update_project_index.py": null
+        },
+        "stage4-tests-agent/": {
+          "service-1-tests/": "...",
+          "service-2-tests/": "...",
+          "coverage-report.jpeg": null,
+          "final_msi.txt": null,
+          "msi-analysis.md": null,
+          "README.md": null,
+          "starting_msi.txt": null,
+          "test-writer-mate.md": null
         }
       },
       "report-M1-3.md": null
     },
     "mcp-features/": {
-      "__tests__/": {
-        "jest.config.cjs": null,
-        "test-feature-flags-server.js": null
-      },
       "Dockerfile": null,
       "index.js": null,
       "package-lock.json": null,
       "package.json": null
     },
     "mcp-rag/": {
-      "__tests__/": {
-        "jest.config.cjs": null,
-        "test-rag-server.js": null
-      },
       "chunks.jsonl": null,
       "index.js": null,
       "ingest.js": null,
@@ -544,6 +546,12 @@
       "mcp-design-principles.md": null,
       "mcp-rag-project-data.md": null
     },
+    "reports/": {
+      "mutation/": {
+        "mcp-features.json": null,
+        "mcp-rag.json": null
+      }
+    },
     "uploads/": {
       "file.txt": null,
       "Screen Shot 2020-09-29 at 5.50.52 PM.png": null
@@ -562,7 +570,9 @@
     "package.json": null,
     "Procfile": null,
     "project-index.json": null,
-    "README.md": null
+    "README.md": null,
+    "stryker.mcp-features.conf.cjs": null,
+    "stryker.mcp-rag.conf.cjs": null
   },
-  "last_updated": "2026-05-23T18:44:54Z"
+  "last_updated": "2026-05-23T19:29:31Z"
 }
