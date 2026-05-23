@@ -701,6 +701,51 @@ h3, .ps-h3 {
   border-top: 1px solid var(--border);
 }
 .ff-card-foot span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ff-ap-btn { margin-left: auto; font-size: 12px; padding: 4px 10px; }
+.ff-ap-btn.is-active { border-color: var(--accent); color: var(--accent); }
+.ff-card.is-selected { border-color: var(--accent); }
+
+.ff-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--text-caption);
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+.ff-live-dot {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  flex-shrink: 0;
+}
+.ff-live-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--success);
+  opacity: 0.7;
+  animation: ff-live-pulse 1.6s ease-out infinite;
+}
+@keyframes ff-live-pulse {
+  0%   { transform: scale(0.6); opacity: 0.7; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ff-live-dot::after { animation: none; opacity: 0.4; }
+}
+
+.ap-panel { margin-top: 24px; }
+.ap-card { display: flex; flex-direction: column; gap: 16px; padding: 20px; }
+.ap-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.ap-title { margin: 0 0 4px; font-size: 18px; line-height: 1.3; }
+.ap-key { font-size: 12px; color: var(--fg-muted); }
+.ap-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.ap-actions > button { min-width: 140px; }
 
 /* ===== Bootstrap surface overrides — keep RB markup, force tokens ===== */
 .card {

@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Message from '../components/Message'
 import Icon from '../components/Icon'
-import { updateFeatureFlag } from '../actions/featureFlagActions'
+import AutoPilotControls from '../components/AutoPilotControls'
+import { updateFeatureFlag, loadFeatureFlags } from '../actions/featureFlagActions'
 
 const STATUSES = ['Enabled', 'Testing', 'Disabled']
 const STATUS_LABEL_SHORT = { Enabled: 'On', Testing: 'Testing', Disabled: 'Off' }
@@ -54,7 +55,7 @@ const TrafficSlider = ({ value, disabled, onChange, onCommit, ariaLabel }) => (
   </div>
 )
 
-const FlagCard = ({ flag, onStatusChange, onTrafficChange }) => {
+const FlagCard = ({ flag, selected, onSelect, onStatusChange, onTrafficChange }) => {
   const [localTraffic, setLocalTraffic] = useState(flag.traffic_percentage)
   useEffect(() => { setLocalTraffic(flag.traffic_percentage) }, [flag.traffic_percentage])
 
@@ -62,7 +63,7 @@ const FlagCard = ({ flag, onStatusChange, onTrafficChange }) => {
   const commit = (v) => { if (v !== flag.traffic_percentage) onTrafficChange(v) }
 
   return (
-    <article className='ps-card ff-card'>
+    <article className={`ps-card ff-card${selected ? ' is-selected' : ''}`}>
       <header className='ff-card-head'>
         <div style={{ minWidth: 0 }}>
           <h3 className='ff-name' title={flag.name}>{flag.name}</h3>
@@ -108,6 +109,16 @@ const FlagCard = ({ flag, onStatusChange, onTrafficChange }) => {
       <footer className='ff-card-foot'>
         <span>rollout · {flag.rollout_strategy || '—'}</span>
         <span>upd · {flag.last_modified || '—'}</span>
+        {onSelect && (
+          <button
+            type='button'
+            className={`ps-btn ps-btn-ghost ff-ap-btn${selected ? ' is-active' : ''}`}
+            onClick={() => onSelect(flag.key)}
+            aria-pressed={!!selected}
+          >
+            {selected ? 'Auto-Pilot ✓' : 'Auto-Pilot'}
+          </button>
+        )}
       </footer>
     </article>
   )
@@ -118,15 +129,38 @@ const IMPL_OPTIONS = ['any', 'yes', 'partial', 'no']
 const FeatureFlagsScreen = ({ history }) => {
   const dispatch = useDispatch()
   const { userInfo } = useSelector((s) => s.userLogin)
-  const { loading, error, flags, updateError } = useSelector((s) => s.featureFlags)
+  const { loading, error, flags, updateError, lastChanged } = useSelector((s) => s.featureFlags)
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [implFilter, setImplFilter] = useState('any')
+  const [selectedKey, setSelectedKey] = useState(null)
+  const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
     if (!userInfo || !userInfo.isAdmin) history.push('/login')
   }, [history, userInfo])
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      dispatch(loadFeatureFlags({ silent: true }))
+    }, 3000)
+    return () => clearInterval(id)
+  }, [dispatch])
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const liveLabel = (() => {
+    if (!lastChanged) return 'ожидание данных'
+    const sec = Math.max(0, Math.floor((now - lastChanged) / 1000))
+    if (sec < 2) return 'обновлено только что'
+    if (sec < 60) return `обновлено ${sec} сек назад`
+    const min = Math.floor(sec / 60)
+    return `обновлено ${min} мин назад`
+  })()
 
   const counts = useMemo(() => {
     const c = { All: flags.length, Enabled: 0, Testing: 0, Disabled: 0 }
@@ -175,6 +209,10 @@ const FeatureFlagsScreen = ({ history }) => {
               {stale > 0 ? ` · ${stale} stale` : ''}
             </span>
           </div>
+        </div>
+        <div className='ff-live' aria-live='polite' aria-atomic='true'>
+          <span className='ff-live-dot' aria-hidden='true' />
+          <span>Live · {liveLabel}</span>
         </div>
       </header>
 
@@ -241,12 +279,28 @@ const FeatureFlagsScreen = ({ history }) => {
             <FlagCard
               key={flag.key}
               flag={flag}
+              selected={selectedKey === flag.key}
+              onSelect={(k) => setSelectedKey((cur) => (cur === k ? null : k))}
               onStatusChange={(s) => dispatch(updateFeatureFlag(flag.key, { status: s }))}
               onTrafficChange={(v) => dispatch(updateFeatureFlag(flag.key, { traffic_percentage: v }))}
             />
           ))}
         </div>
       )}
+
+      {selectedKey && (() => {
+        const selectedFlag = flags.find((f) => f.key === selectedKey)
+        if (!selectedFlag) return null
+        return (
+          <div className='ap-panel'>
+            <AutoPilotControls
+              feature={selectedFlag}
+              onUpdate={() => dispatch(loadFeatureFlags({ silent: true }))}
+              onClose={() => setSelectedKey(null)}
+            />
+          </div>
+        )
+      })()}
     </div>
   )
 }

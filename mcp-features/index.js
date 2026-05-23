@@ -1,10 +1,13 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
+import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js'
+import express from 'express'
 import { z } from 'zod'
-import { readFileSync, writeFileSync, renameSync, mkdtempSync } from 'fs'
+import { randomUUID } from 'node:crypto'
+import { readFileSync, writeFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import os from 'os'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const FEATURES_PATH = join(__dirname, '..', 'backend', 'features.json')
@@ -21,10 +24,7 @@ function readFeatures() {
 
 function writeFeatures(data) {
   try {
-    const tmpDir = mkdtempSync(join(os.tmpdir(), 'ff-'))
-    const tmpPath = join(tmpDir, 'features.json')
-    writeFileSync(tmpPath, JSON.stringify(data, null, 2) + '\n', 'utf-8')
-    renameSync(tmpPath, FEATURES_PATH)
+    writeFileSync(FEATURES_PATH, JSON.stringify(data, null, 2) + '\n', 'utf-8')
   } catch (err) {
     throw { error: 'FILE_WRITE_ERROR', message: `Cannot write features.json: ${err.message}` }
   }
@@ -64,7 +64,8 @@ function errObj(error, message, feature_id) {
   return { error, message, feature_id }
 }
 
-const server = new McpServer({ name: 'proshop-feature-flags', version: '1.0.0' })
+function createServer() {
+  const server = new McpServer({ name: 'proshop-feature-flags', version: '1.0.0' })
 
 // ─── Tool 1: get_feature_info ────────────────────────────────────────────────
 
@@ -281,9 +282,84 @@ server.resource(
   },
 )
 
-async function main() {
-  const transport = new StdioServerTransport()
-  await server.connect(transport)
+  return server
 }
 
-main().catch(console.error)
+async function runStdio() {
+  const transport = new StdioServerTransport()
+  await createServer().connect(transport)
+}
+
+async function runHttp() {
+  const port = Number(process.env.MCP_HTTP_PORT || process.env.MCP_SSE_PORT || 7777)
+  const token = process.env.MCP_BEARER_TOKEN || ''
+  const app = express()
+  app.use(express.json())
+
+  const transports = {}
+
+  app.use('/mcp', (req, res, next) => {
+    if (!token) return next()
+    if (req.headers.authorization === `Bearer ${token}`) return next()
+    res.status(401).send('Unauthorized')
+  })
+
+  app.post('/mcp', async (req, res) => {
+    try {
+      const sessionId = req.headers['mcp-session-id']
+      let transport
+
+      if (sessionId && transports[sessionId]) {
+        transport = transports[sessionId]
+      } else if (!sessionId && isInitializeRequest(req.body)) {
+        transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: () => randomUUID(),
+          onsessioninitialized: (sid) => { transports[sid] = transport },
+        })
+        transport.onclose = () => {
+          if (transport.sessionId) delete transports[transport.sessionId]
+        }
+        await createServer().connect(transport)
+        await transport.handleRequest(req, res, req.body)
+        return
+      } else {
+        res.status(400).json({
+          jsonrpc: '2.0',
+          error: { code: -32000, message: 'Bad Request: No valid session ID provided' },
+          id: null,
+        })
+        return
+      }
+
+      await transport.handleRequest(req, res, req.body)
+    } catch (err) {
+      console.error('MCP POST error:', err)
+      if (!res.headersSent) {
+        res.status(500).json({
+          jsonrpc: '2.0',
+          error: { code: -32603, message: 'Internal server error' },
+          id: null,
+        })
+      }
+    }
+  })
+
+  const handleSessionRequest = async (req, res) => {
+    const sessionId = req.headers['mcp-session-id']
+    const transport = sessionId && transports[sessionId]
+    if (!transport) {
+      res.status(400).send('Invalid or missing session ID')
+      return
+    }
+    await transport.handleRequest(req, res)
+  }
+
+  app.get('/mcp', handleSessionRequest)
+  app.delete('/mcp', handleSessionRequest)
+
+  app.listen(port, () => console.error(`MCP Streamable HTTP listening on http://0.0.0.0:${port}/mcp`))
+}
+
+const mode = process.env.MCP_TRANSPORT
+  || (process.argv.includes('--http') || process.argv.includes('--sse') ? 'http' : 'stdio')
+;((mode === 'http' || mode === 'sse') ? runHttp() : runStdio()).catch(console.error)

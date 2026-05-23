@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node backend/server",
-    "server": "nodemon backend/server",
+    "server": "nodemon --ignore backend/features.json --ignore backend/data backend/server",
     "client": "NODE_OPTIONS=--openssl-legacy-provider npm start --prefix frontend",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "data:import": "node backend/seeder",

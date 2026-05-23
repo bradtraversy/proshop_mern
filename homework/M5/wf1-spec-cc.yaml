@@ -1,0 +1,381 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# n8n Workflow Spec: AutoPilot Feature Flags
+# Project: ProShop (MERN)
+# Pipeline: Frontend (AutoPilotControls) → Backend (/api/autopilot/feature-control)
+#           → n8n webhook → IF validate → AI Agent (gpt-4o-mini + 3 MCP tools)
+#           → Respond to Webhook → Backend proxy → UI
+# Version: v1 (2026-05)
+# ──────────────────────────────────────────────────────────────────────────────
+
+workflow_name: autopilot-feature-flags
+description: >
+  Server-side proxy receives a structured action from the Feature Dashboard,
+  forwards it to n8n via X-API-Key. n8n validates the payload, then calls an
+  AI Agent (gpt-4o-mini, temperature 0, window memory) which orchestrates 1-3
+  calls to mcp-features MCP tools to read and mutate features.json. Response
+  is unified across success / business error / infra error paths so the UI
+  reads a single contract.
+
+# ─────────────────────────────────────────────
+# 1. TRIGGER
+# ─────────────────────────────────────────────
+trigger:
+  type: webhook
+  config:
+    http_method: POST
+    path: /feature-control
+    response_mode: responseNode
+    full_url_pattern: "{{ N8N_WEBHOOK_URL }}/feature-control"
+    response_format: json
+    binary_data: false
+  filters:
+    auth:
+      header: X-API-Key
+      expected_value_env: N8N_API_KEY
+      on_mismatch:
+        http_status: 401
+        body:
+          success: false
+          message: "Unauthorized"
+          current_state: null
+          rejected_at: "auth"
+    expected_payload_schema:
+      feature_id:          { type: string,  required: true }
+      action:              { type: string,  required: true, enum: [check, test, rollback, rollout] }
+      target_state:        { type: string,  required: false, enum: [Enabled, Disabled, Testing] }
+      traffic_percentage:  { type: number,  required: false, range: [0, 100], required_when: "action == 'rollout'" }
+
+# ─────────────────────────────────────────────
+# 2. STEPS
+# ─────────────────────────────────────────────
+steps:
+
+  - step: 1
+    node_type: "n8n-nodes-base.webhook"
+    purpose: "Receive POST from backend proxy; auth via X-API-Key."
+    config:
+      httpMethod: POST
+      path: feature-control
+      responseMode: responseNode
+      options:
+        rawBody: false
+
+  - step: 2
+    node_type: "n8n-nodes-base.if"
+    purpose: "Pre-LLM validation: X-API-Key + required fields + action enum."
+    config:
+      conditions:
+        combinator: and
+        rules:
+          - left:  "={{ $headers['x-api-key'] }}"
+            op:    equals
+            right: "={{ $env.N8N_API_KEY }}"
+          - left:  "={{ $json.body.feature_id }}"
+            op:    isNotEmpty
+          - left:  "={{ ['check','test','rollback','rollout'].includes($json.body.action) }}"
+            op:    isTrue
+      on_false_branch: "→ step 3 (validation error response)"
+      on_true_branch:  "→ step 4 (AI Agent)"
+
+  - step: 3
+    node_type: "n8n-nodes-base.respondToWebhook"
+    purpose: "Return 400 validation error with unified shape."
+    config:
+      responseCode: 400
+      responseBody:
+        success: false
+        message: "Invalid payload: feature_id / action missing or action not in enum."
+        current_state: null
+        rejected_at: "input-validation"
+
+  - step: 4
+    node_type: "@n8n/n8n-nodes-langchain.agent"
+    purpose: "Core AutoPilot brain. Validates business rules, calls 1-3 MCP tools, returns strict JSON per GCAO output schema."
+    config:
+      promptType: define
+      text: "={{ JSON.stringify($json.body) }}"
+      options:
+        systemMessage_ref: GCAO_AUTOPILOT_FEATURE_FLAGS_v1
+        maxIterations: 5
+        returnIntermediateSteps: false
+      retry_on_fail:
+        enabled: true
+        max_tries: 2
+        wait_between_tries_ms: 2000
+      timeout_ms: 25000
+    sub_nodes:
+      chat_model:
+        node_type: "@n8n/n8n-nodes-langchain.lmChatOpenAi"
+        config:
+          model: gpt-4o-mini
+          temperature: 0
+          response_format: json_object
+          timeout_ms: 20000
+      memory:
+        node_type: "@n8n/n8n-nodes-langchain.memoryBufferWindow"
+        config:
+          sessionKey: "={{ $json.body.feature_id }}"
+          contextWindowLength: 5
+      tools:
+        - node_type: "@n8n/n8n-nodes-langchain.mcpClientTool"
+          name: get_feature_info
+          purpose: "Read current state before/after mutation."
+        - node_type: "@n8n/n8n-nodes-langchain.mcpClientTool"
+          name: set_feature_state
+          purpose: "Set status to Enabled | Disabled | Testing."
+        - node_type: "@n8n/n8n-nodes-langchain.mcpClientTool"
+          name: adjust_traffic_rollout
+          purpose: "Set traffic_percentage [0..100]; meaningful only when status == Testing."
+
+  - step: 5
+    node_type: "n8n-nodes-base.code"
+    purpose: "Post-Agent normalization: parse JSON, coerce to unified contract, decide HTTP status."
+    config:
+      language: javascript
+      code: |
+        const raw = $input.first().json.output ?? $input.first().json;
+        let parsed;
+        try {
+          parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        } catch (e) {
+          return [{ json: {
+            _httpStatus: 502,
+            success: false,
+            message: "AI returned malformed JSON",
+            current_state: null,
+            rejected_at: "ai-provider"
+          }}];
+        }
+        return [{ json: {
+          _httpStatus: 200,
+          success: !!parsed.success,
+          message: parsed.message ?? "",
+          current_state: parsed.current_state ?? null,
+          rejected_at: parsed.rejected_at ?? null
+        }}];
+
+  - step: 6
+    node_type: "n8n-nodes-base.respondToWebhook"
+    purpose: "Final unified response to backend → frontend."
+    config:
+      responseCode: "={{ $json._httpStatus }}"
+      responseBody:
+        success:        "={{ $json.success }}"
+        message:        "={{ $json.message }}"
+        current_state:  "={{ $json.current_state }}"
+        rejected_at:    "={{ $json.rejected_at }}"
+
+  - step: 7
+    node_type: "n8n-nodes-base.respondToWebhook"
+    purpose: "Error-trail branch. 502 for infra failures after retries."
+    config:
+      responseCode: 502
+      responseBody:
+        success: false
+        message: "AutoPilot upstream error (MCP or AI provider unavailable)"
+        current_state: null
+        rejected_at: "tool-execution"
+    wired_from:
+      - "step 4 on-error output (after retries exhausted)"
+
+# ─────────────────────────────────────────────
+# 3. AI AGENT CONFIG
+# ─────────────────────────────────────────────
+ai_agent_config:
+  model:
+    provider: openai
+    name: gpt-4o-mini
+    temperature: 0
+    response_format: json_object
+    timeout_ms: 20000
+  memory:
+    type: window_buffer
+    session_key_expr: "{{ $json.body.feature_id }}"
+    window_size: 5
+    rationale: >
+      Last 5 turns per feature_id. Different feature_ids isolated.
+      Cross-admin context bleed accepted (Q5.6=a).
+  tools:
+    - name: get_feature_info
+      mcp_server: mcp-features
+      io: { input: { feature_id: string }, output: { id, name, status, traffic_percentage, last_modified } }
+    - name: set_feature_state
+      mcp_server: mcp-features
+      io: { input: { feature_id, status: "Enabled|Disabled|Testing" }, output: { ok: bool } }
+    - name: adjust_traffic_rollout
+      mcp_server: mcp-features
+      io: { input: { feature_id, traffic_percentage: "0..100" }, output: { ok: bool } }
+  system_prompt_template_ref: GCAO_AUTOPILOT_FEATURE_FLAGS_v1
+
+# ─────────────────────────────────────────────
+# 4. CREDENTIALS NEEDED
+# ─────────────────────────────────────────────
+credentials_needed:
+
+  - name: N8N_API_KEY
+    type: "header value (X-API-Key) — checked in step 2"
+    where_stored: "n8n env var; backend .env"
+    placeholder_in_spec: true
+    notes: "Reference as {{ $env.N8N_API_KEY }}, never inlined."
+
+  - name: MCP_BEARER_TOKEN
+    type: "n8n credential: MCP Client (HTTP Streamable) → Authorization: Bearer <token>"
+    where_stored: "n8n credential store; mirrored in mcp-features Docker env"
+    placeholder_in_spec: true
+    notes: "Same token on both ends. Rotate together."
+
+  - name: MCP_ENDPOINT_URL
+    type: "n8n credential: MCP Client (HTTP Streamable) → endpoint"
+    where_stored: "n8n credential store"
+    placeholder_in_spec: true
+    value_pattern: "https://<ephemeral>.trycloudflare.com/mcp"
+    notes: "EPHEMERAL — Cloudflare quick tunnel URL changes on every restart. Updated manually (Q4.2a=a)."
+
+  - name: OPENAI_API_KEY
+    type: "n8n credential: OpenAI account (default / existing)"
+    where_stored: "n8n credential store"
+    placeholder_in_spec: true
+    notes: "Reuse default OpenAI credential."
+
+# ─────────────────────────────────────────────
+# 5. EDGE CASES
+# ─────────────────────────────────────────────
+edge_cases:
+
+  - case: "Missing X-API-Key or wrong value"
+    handling:
+      detection: "step 2 IF"
+      http_status: 401
+      body: { success: false, message: "Unauthorized", current_state: null, rejected_at: "auth" }
+      llm_called: false
+      mcp_called: false
+
+  - case: "Missing required field (feature_id) or invalid action enum"
+    handling:
+      detection: "step 2 IF"
+      http_status: 400
+      body: { success: false, message: "Invalid payload: ...", current_state: null, rejected_at: "input-validation" }
+      llm_called: false
+      mcp_called: false
+
+  - case: "Invalid traffic_percentage (out of [0,100]) or missing for action=rollout"
+    handling:
+      detection: "AI Agent system prompt — Constraints"
+      http_status: 200
+      body: { success: false, message: "<explanation>", current_state: null, rejected_at: "input-validation" }
+      llm_called: true
+      mcp_called: false
+
+  - case: "Unknown feature_id"
+    handling:
+      detection: "get_feature_info MCP tool returns error"
+      http_status: 200
+      body: { success: false, message: "Feature ... не найдена", current_state: null, rejected_at: "tool-execution" }
+      llm_called: true
+      mcp_called: true
+
+  - case: "Idempotent repeat — rollback on already-Disabled"
+    handling:
+      detection: "AI Agent — Constraint 'do not call set_feature_state if already at target'"
+      http_status: 200
+      body: { success: true, message: "Уже в состоянии Disabled (no-op)", current_state: <current>, rejected_at: null }
+      llm_called: true
+      mcp_called: true
+      ui_behavior: "Same green toast as a real change; onUpdate fires with current_state."
+
+  - case: "MCP server unreachable"
+    handling:
+      detection: "MCP Client Tool throws → Agent propagates"
+      http_status: 200
+      body: { success: false, message: "MCP unavailable: <reason>", current_state: null, rejected_at: "tool-execution" }
+      retry: "none (Q5.3=a)"
+      alerting: "none for MVP"
+
+  - case: "OpenAI timeout / 429 / 5xx"
+    handling:
+      detection: "Agent / Chat Model node"
+      retry: "Retry on Fail: 2 attempts, 2s delay (Q5.4=a)"
+      after_retries_exhausted:
+        route_to: "step 7"
+        http_status: 502
+        body: { success: false, message: "AutoPilot upstream error", current_state: null, rejected_at: "ai-provider" }
+
+  - case: "Global workflow timeout"
+    handling:
+      cap_ms: 30000
+      ui_behavior: "Frontend aborts at ~30s, shows toast, re-enables panel buttons for retry."
+
+  - case: "Race condition — two admins on same feature_id"
+    handling:
+      policy: "last-write-wins (Q5.6=a)"
+      data_safety: "features.json writes are atomic (tmp + rename)."
+      logging: "no audit log in MVP."
+      cross_admin_memory_bleed: "ACCEPTED — window memory keyed by feature_id."
+
+  - case: "AI Agent returns malformed JSON"
+    handling:
+      detection: "step 5 Code node JSON.parse catch"
+      http_status: 502
+      body: { success: false, message: "AI returned malformed JSON", current_state: null, rejected_at: "ai-provider" }
+
+  - case: "Action=rollout when flag not Testing"
+    handling:
+      detection: "AI Agent — prompt Action #4 first calls get_feature_info"
+      decision: >
+        Per verbatim prompt, agent calls adjust_traffic_rollout immediately.
+        Semantics owned by MCP server. If MCP rejects, falls under tool-execution error.
+
+# ─────────────────────────────────────────────
+# 6. UI CONTRACT
+# ─────────────────────────────────────────────
+ui_contract:
+  endpoint:      "POST /api/autopilot/feature-control"
+  client_payload: { feature_id: string, action: "check|test|rollback|rollout", target_state?: string, traffic_percentage?: number }
+  while_pending:  "AutoPilotControls panel for that feature_id is locked. Other cards interactive."
+  on_success_true_change: "green toast (message), call onUpdate(current_state)"
+  on_success_true_noop:   "green toast (no-op), call onUpdate(current_state)"
+  on_success_false:       "red toast (message), do NOT call onUpdate"
+  on_http_4xx:            "red toast (validation/auth error), do NOT call onUpdate"
+  on_http_5xx_or_timeout: "red toast 'AutoPilot не ответил, попробуйте позже', re-enable panel buttons"
+  global_timeout_ms: 30000
+
+# ─────────────────────────────────────────────
+# APPENDIX — GCAO_AUTOPILOT_FEATURE_FLAGS_v1 (verbatim)
+# ─────────────────────────────────────────────
+system_prompt_verbatim: |
+  Goal:
+  Выполни запрос пользователя по управлению feature flag {{$json.feature_id}}.
+
+  Context:
+  - Текущее состояние feature flag получи через get_feature_info ПЕРЕД любыми изменениями.
+  - Команда от UI: action={{$json.action}}, target_state={{$json.target_state}}, traffic_percentage={{$json.traffic_percentage}}.
+  - Доступные actions: "check" (только чтение), "test" (перевести в Testing), "rollback" (Disabled), "rollout" (изменить traffic_percentage).
+  - Available tools: get_feature_info, set_feature_state, adjust_traffic_rollout.
+
+  Action:
+  1. Если action="check" — вызови get_feature_info и верни результат.
+  2. Если action="test" — get_feature_info → проверь что фича не Enabled → set_feature_state(Testing) → get_feature_info для верификации.
+  3. Если action="rollback" — get_feature_info → если уже Disabled, верни no_op → иначе set_feature_state(Disabled) → get_feature_info.
+  4. Если action="rollout" — get_feature_info → adjust_traffic_rollout(traffic_percentage) → get_feature_info.
+  5. На любом шаге если invalid params (например, traffic_percentage не передан для action="rollout") — верни ошибку без вызова инструментов.
+
+  Output:
+  JSON строго по схеме:
+  {
+    "success": boolean,
+    "message": string (краткое описание результата на русском, 1 предложение),
+    "current_state": {
+      "id": string,
+      "name": string,
+      "status": "Enabled" | "Disabled" | "Testing",
+      "traffic_percentage": number,
+      "last_modified": string (ISO 8601)
+    } | null,
+    "rejected_at": "input-validation" | "tool-execution" | null
+  }
+
+  Constraints:
+  - traffic_percentage в диапазоне [0, 100]. Если получен -50 или 150 — отказ с message объяснения.
+  - target_state из enum [Enabled, Disabled, Testing]. Если другое — отказ.
+  - НЕ вызывай set_feature_state повторно если current_state.status уже соответствует целевому.
+  - Если ошибка от MCP-инструмента — верни success=false с message от инструмента.

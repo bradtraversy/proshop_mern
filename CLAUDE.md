@@ -67,9 +67,23 @@ Express + MongoDB (Mongoose). Uses ES modules (`"type": "module"` in root `packa
   - `/api/orders` — create, pay (PayPal), deliver, list
   - `/api/upload` — multer file uploads to `/uploads/`
   - `/api/config/paypal` — returns client ID
-  - `/api/featureflags` — returns `backend/features.json` as JSON (no auth)
+  - `/api/featureflags` — returns `backend/features.json` as JSON (no auth); `PATCH /:key` — update status/traffic (admin only, atomic write via tmp+rename)
+  - `/api/autopilot` — server-side proxy to n8n WF1 webhook (`POST /feature-control`); reads `N8N_WEBHOOK_URL` + `N8N_API_KEY` from env; browser never sees secrets
 - **Middleware:** `backend/middleware/authMiddleware.js` — JWT `protect` + `admin` guards. `errorMiddleware.js` — global error handler.
 - **Config:** `backend/config/db.js` — Mongoose connection using `MONGO_URI` env var
+
+### Feature Flags MCP Server (`mcp-features/`)
+
+Два транспорта из одного `index.js`:
+
+- **stdio** (локальный, по умолчанию) — Claude Code и Cursor спавнят процесс напрямую через `.mcp.json`. `MCP_TRANSPORT` не задан → stdio.
+- **StreamableHTTP** (Docker) — `MCP_TRANSPORT=http`, порт `MCP_HTTP_PORT` (дефолт 7777). Используется в `mcp-features` Docker-сервисе для доступа из n8n через Cloudflare Tunnel.
+
+Оба режима пишут в один `backend/features.json` (атомарно: tmp + `renameSync`). Конфликтов нет.
+
+`mcp-features/Dockerfile` — образ node:20-alpine, `EXPOSE 7777`. Монтируется `./backend/features.json` через Docker Compose volume.
+
+`MCP_BEARER_TOKEN` в Docker SSE-режиме — Express middleware проверяет `Authorization: Bearer <token>`, 401 если не совпадает.
 
 ### RAG MCP Server (`mcp-rag/`)
 
@@ -101,11 +115,18 @@ JWT_SECRET=...
 PAYPAL_CLIENT_ID=...
 COHERE_API_KEY=...
 QDRANT_URL=http://localhost:6333
+N8N_WEBHOOK_URL=https://your-n8n.cloud/webhook
+N8N_API_KEY=...
+MCP_BEARER_TOKEN=...
 ```
 
 Port 5001 instead of 5000 — macOS AirPlay Receiver occupies 5000.
 
 `COHERE_API_KEY` — требуется для `mcp-rag/ingest.js` и `mcp-rag/index.js`. Без него RAG-сервер завершится при старте. `QDRANT_URL` опционален, дефолт `http://localhost:6333`.
+
+`N8N_WEBHOOK_URL` — базовый URL n8n-инстанса (без пути). `autopilotRoutes.js` дописывает `/feature-control`. Без него `/api/autopilot` вернёт 500. `N8N_API_KEY` — значение `X-API-Key`; только сервер его знает, в браузерный bundle не попадает.
+
+`MCP_BEARER_TOKEN` — Bearer Token для Docker SSE-режима `mcp-features`. Если пустой — auth выключен (только для локального теста без туннеля).
 
 ### Key Patterns
 
@@ -120,6 +141,7 @@ Port 5001 instead of 5000 — macOS AirPlay Receiver occupies 5000.
 - RAG MCP сервер (`proshop-rag`) автостартует через `.mcp.json`. Если Qdrant не запущен или коллекция не проиндексирована — инструмент вернёт `isError: true` с понятным сообщением.
 - Чанкер `ingest.js` экспортирует `buildChunks()` — можно импортировать отдельно без запуска full ingest pipeline (используй `--test` флаг для smoke-теста).
 - `mcp-rag/ingest.js --dump [path]` — дамп всех чанков в JSONL без обращения к Qdrant/Cohere. Дефолтный путь — `mcp-rag/chunks.jsonl`. Файл закоммичен в репо для ревью качества chunking без поднятия инфраструктуры. Перегенерировать после изменения `project-data/` или логики чанкера.
+- AutoPilot proxy: `POST /api/autopilot/feature-control` — backend проксирует в n8n, добавляя `X-API-Key`. Frontend не хранит и не видит секрет. CORS preflight не проблема — браузер идёт на свой origin. На сетевую ошибку backend возвращает 502/504, на успех — upstream JSON as-is.
 
 ## Commit Conventions
 
@@ -156,6 +178,9 @@ COURSE: Fix dev environment setup for modern Node.js
 - `backend/features.json` — источник данных для feature flags. Путь в роуте вычисляется через `import.meta.url` (не через `process.cwd()`), поэтому файл должен лежать рядом с `backend/routes/featureFlagRoutes.js` (т.е. на уровень выше — `backend/`). Docker Compose монтирует `./backend:/app/backend`, поэтому файл доступен в контейнере автоматически. MCP-интеграция пишет в этот файл; пользователь видит изменения после перезагрузки страницы.
 - RAG MCP: `mcp-rag/ingest.js` использует `import.meta.url` для вычисления пути к `project-data/` — файлы ищутся относительно расположения скрипта, не `process.cwd()`. При запуске из любой директории путь всегда корректен.
 - `docs/rag/qdrant-data/` игнорируется в git (кроме `.gitkeep`) — данные Qdrant не коммитятся. После клонирования репозитория нужно запустить Qdrant и выполнить `node mcp-rag/ingest.js` заново.
+- `N8N_WEBHOOK_URL` и `N8N_API_KEY` обязательны для работы AutoPilot. Без `N8N_WEBHOOK_URL` `/api/autopilot` вернёт 500 при любом запросе.
+- `mcp-features` в Docker Compose: `docker compose up -d mcp-features mcp-tunnel`. URL туннеля — в логах `mcp-tunnel` (grep trycloudflare.com). URL эфемерный — меняется при каждом рестарте контейнера; n8n credentials нужно обновлять руками.
+- `mcp-features` в Docker использует `MCP_TRANSPORT=http` и `MCP_HTTP_PORT=7777`. Локально (Claude Code/Cursor) — stdio через `.mcp.json`, `MCP_TRANSPORT` не задан.
 
 ## MR Review Checklist
 

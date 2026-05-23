@@ -39,7 +39,10 @@
 │       ├── App.js         # Роутинг
 │       ├── store.js       # Redux store (redux-thunk)
 │       └── index.js       # Точка входа
-├── mcp-features/        # MCP-сервер управления feature flags
+├── mcp-features/        # MCP-сервер управления feature flags (stdio для Claude Code, SSE/HTTP для n8n через Docker)
+│   ├── index.js         #   Двойной транспорт: stdio (локально) + StreamableHTTP (MCP_TRANSPORT=http)
+│   ├── Dockerfile       #   Образ для Docker Compose (порт 7777)
+│   └── package.json
 ├── mcp-rag/             # MCP-сервер семантического поиска по документации
 │   ├── index.js         #   MCP-сервер: tool search_project_docs + resource proshop-docs-index
 │   ├── ingest.js        #   Ingest pipeline: чанкинг → Cohere embeddings → Qdrant upsert
@@ -106,6 +109,8 @@ docker-compose up --build
 | Frontend | http://localhost:3000 |
 | Backend API | http://localhost:5001/api |
 | MongoDB | localhost:27017 |
+| mcp-features (SSE/HTTP) | http://localhost:7777 |
+| mcp-tunnel | публичный URL в логах (`docker compose logs mcp-tunnel`) |
 
 #### Полезные команды
 
@@ -122,6 +127,12 @@ docker-compose up --build
 # Посмотреть логи конкретного сервиса
 docker-compose logs -f backend
 docker-compose logs -f frontend
+
+# Запустить только mcp-features + Cloudflare tunnel (для n8n интеграции)
+docker compose up -d mcp-features mcp-tunnel
+
+# Найти публичный URL туннеля (нужен для MCP Client в n8n)
+docker compose logs mcp-tunnel | grep trycloudflare.com
 ```
 
 ---
@@ -163,6 +174,9 @@ PAYPAL_CLIENT_ID=your_paypal_client_id
 | `PAYPAL_CLIENT_ID` | `server.js` → `/api/config/paypal` | Client ID из PayPal Developer Dashboard (sandbox или live) |
 | `COHERE_API_KEY` | `mcp-rag/ingest.js`, `mcp-rag/index.js` | API-ключ Cohere для генерации эмбеддингов. **Обязателен для RAG.** |
 | `QDRANT_URL` | `mcp-rag/ingest.js`, `mcp-rag/index.js` | URL Qdrant. Дефолт: `http://localhost:6333` |
+| `N8N_WEBHOOK_URL` | `backend/routes/autopilotRoutes.js` | Базовый URL n8n-инстанса (до пути). Пример: `https://eefimenko.app.n8n.cloud/webhook`. **Обязателен для AutoPilot.** |
+| `N8N_API_KEY` | `backend/routes/autopilotRoutes.js` | `X-API-Key` для аутентификации на n8n webhook. Хранится только на сервере. |
+| `MCP_BEARER_TOKEN` | `mcp-features/index.js` (Docker SSE-режим) | Bearer Token для HTTP-доступа к mcp-features из n8n. Если пустой — auth выключен. |
 
 #### Установка зависимостей
 
@@ -378,7 +392,9 @@ Claude автоматически вызовет `search_project_docs` и отв
 
 **Просмотр:** войти под админом → меню Admin → Feature Dashboard (`/admin/featuredashboard`).
 
-**Обновление флага:** через UI Feature Dashboard (toggle статуса + slider traffic %, пишет в `backend/features.json` через `PATCH /api/featureflags/:key`), либо отредактировать `backend/features.json` напрямую или через MCP. Изменения вступают в силу после перезагрузки страницы — рестарт сервера не нужен.
+**Обновление флага вручную:** через UI Feature Dashboard (toggle статуса + slider traffic %, пишет в `backend/features.json` через `PATCH /api/featureflags/:key`), либо отредактировать `backend/features.json` напрямую или через MCP. Изменения вступают в силу после перезагрузки страницы — рестарт сервера не нужен.
+
+**AutoPilot (n8n WF1):** страница Feature Flags (`/admin/featureflags`) — выбрать флаг → появляется панель AutoPilot с кнопками `Run check`, `Testing mode`, `Rollback feature`. Кнопки вызывают `POST /api/autopilot/feature-control`, который проксирует запрос в n8n WF1. Требует заполненных `N8N_WEBHOOK_URL` и `N8N_API_KEY` в `.env`.
 
 Структура одного флага:
 

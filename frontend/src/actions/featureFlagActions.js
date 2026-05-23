@@ -8,9 +8,9 @@ import {
   FEATURE_FLAG_UPDATE_FAIL,
 } from '../constants/featureFlagConstants'
 
-export const loadFeatureFlags = () => async (dispatch) => {
+export const loadFeatureFlags = ({ silent = false } = {}) => async (dispatch) => {
   try {
-    dispatch({ type: FEATURE_FLAGS_REQUEST })
+    if (!silent) dispatch({ type: FEATURE_FLAGS_REQUEST })
 
     const { data } = await axios.get('/api/featureflags')
 
@@ -40,9 +40,19 @@ export const updateFeatureFlag = (key, patch) => async (dispatch, getState) => {
   const previous = flags.find((f) => f.key === key)
   if (!previous) return
 
+  const effectivePatch = { ...patch }
+  if (patch.status !== undefined && patch.traffic_percentage === undefined) {
+    if (patch.status === 'Enabled') effectivePatch.traffic_percentage = 100
+    else if (patch.status === 'Disabled') effectivePatch.traffic_percentage = 0
+    else {
+      const tp = previous.traffic_percentage
+      effectivePatch.traffic_percentage = (Number.isInteger(tp) && tp >= 1 && tp <= 99) ? tp : 10
+    }
+  }
+
   dispatch({
     type: FEATURE_FLAG_UPDATE_OPTIMISTIC,
-    payload: { key, patch },
+    payload: { key, patch: effectivePatch },
   })
 
   try {
@@ -55,6 +65,9 @@ export const updateFeatureFlag = (key, patch) => async (dispatch, getState) => {
 
     dispatch({ type: FEATURE_FLAG_UPDATE_SUCCESS, payload: data })
   } catch (error) {
+    if (error.response && error.response.status === 401) {
+      return
+    }
     dispatch({
       type: FEATURE_FLAG_UPDATE_FAIL,
       payload: {

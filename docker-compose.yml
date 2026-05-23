@@ -10,6 +10,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
 
   seeder:
     build: .
@@ -36,6 +37,42 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+    restart: unless-stopped
+
+  mcp-features:
+    build:
+      context: .
+      dockerfile: mcp-features/Dockerfile
+    ports:
+      - "7777:7777"
+    environment:
+      - MCP_TRANSPORT=http
+      - MCP_HTTP_PORT=7777
+      - MCP_BEARER_TOKEN=${MCP_BEARER_TOKEN:-}
+    volumes:
+      - ./backend/features.json:/app/backend/features.json
+    restart: unless-stopped
+
+  mcp-tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --url http://mcp-features:7777
+    depends_on:
+      - mcp-features
+    restart: unless-stopped
+
+  logs-server:
+    image: python:3.12-alpine
+    command: python3 -m http.server 8080 --directory /logs
+    volumes:
+      - ./homework/M5/logs.json:/logs/logs.json:ro
+    restart: unless-stopped
+
+  logs-tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --url http://logs-server:8080
+    depends_on:
+      - logs-server
+    restart: unless-stopped
 
   frontend:
     build:
@@ -53,6 +90,7 @@ services:
       - ./frontend/public:/app/public
     depends_on:
       - backend
+    restart: unless-stopped
 
 volumes:
   mongo_data:

@@ -1,0 +1,592 @@
+{
+  "name": "wf2-scheduled-monitor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -320,
+        -80
+      ],
+      "id": "3ed1a65d-c9a0-4227-bf3c-739ace346471",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst data = items.map(item => item.json);\n\nconst now = Date.now();\nconst window_ms = 60 * 1000;\nconst recent = data.filter(e => (now - new Date(e.timestamp).getTime()) < window_ms);\n\nconst total = recent.length;\nconst errorItems = recent.filter(e => e.status === 'error');\nconst errors = errorItems.length;\nconst error_rate = total > 0 ? errors / total : 0;\n\n// Берём feature_id из первой записи с ошибкой, или из первой записи вообще\nconst feature_id = errorItems[0]?.feature_id ?? recent[0]?.feature_id ?? 'unknown';\n\nreturn [{ json: { feature_id, error_rate, total, errors } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        -80
+      ],
+      "id": "9c1b49a9-e24f-4284-a2b8-d704a9126dda",
+      "name": "Read & Analyze Logs"
+    },
+    {
+      "parameters": {
+        "url": "https://receivers-worker-arnold-but.trycloudflare.com/logs.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -112,
+        -80
+      ],
+      "id": "4657b211-b3ac-4eae-aedc-bd578a7abb4d",
+      "name": "GET Logs"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://accurately-month-insured-rows.trycloudflare.com/mcp",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/event-stream "
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"initialize\",\n  \"params\": {\n    \"protocolVersion\": \"2024-11-05\",\n    \"capabilities\": {},\n    \"clientInfo\": {\n      \"name\": \"n8n\",\n      \"version\": \"1.0\"\n    }\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        320,
+        -80
+      ],
+      "id": "3de6f3b2-73a7-4d33-aac2-6d7882401729",
+      "name": "Init MCP",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "bCTV2MSaGpiOApcA",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://accurately-month-insured-rows.trycloudflare.com/mcp",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/event-stream"
+            },
+            {
+              "name": "mcp-session-id",
+              "value": "={{ $('Init MCP').item.json.headers['mcp-session-id'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"get_feature_info\",\"arguments\":{\"feature_id\":\"{{ $('Read & Analyze Logs').item.json.feature_id }}\"}}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        544,
+        -80
+      ],
+      "id": "09376461-16b5-4871-9cd1-2f1e73522d7a",
+      "name": "Get Feature Status",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "bCTV2MSaGpiOApcA",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $('Get Feature Status').item.json.data; \n\n// Извлечь JSON из SSE строки\nconst jsonStr = raw.split('\\n').find(line => line.startsWith('data: '))?.slice(6);\n\nif (!jsonStr) {\n  throw new Error('No data line found in SSE response');\n}\n\nconst mcpResponse = JSON.parse(jsonStr);\nconst featureData = JSON.parse(mcpResponse.result.content[0].text);                             \nreturn {\n  json: {\n    feature_id: $('Read & Analyze Logs').item.json.feature_id,\n    error_rate: $('Read & Analyze Logs').item.json.error_rate,\n    total: $('Read & Analyze Logs').item.json.total,\n    current_status: featureData.status,\n    traffic_percentage: featureData.traffic_percentage,\n    name: featureData.name\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        -80
+      ],
+      "id": "76e92f0c-a69a-4278-bc2b-e844d94c80dd",
+      "name": "Merge Responses"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.error_rate > 0.05 && $json.current_status !== 'Disabled' }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "60675c54-9f0b-41c1-8386-1a6e607ec1d2"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "deactivate"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6adb7d35-dbac-4de3-add0-4a2b9aff15e8",
+                    "leftValue": "={{ $json.error_rate < 0.01 && $json.current_status === 'Disabled' }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "reenable"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        304
+      ],
+      "id": "bdeecdd5-297c-400b-bf42-f3ce4f7bca75",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5fb77d51-7703-486a-beaa-4e0e0cdd23c5",
+              "name": "feature_id",
+              "value": "={{ $json.feature_id }}",
+              "type": "string"
+            },
+            {
+              "id": "aa8aa293-4181-474a-9aeb-b235700582c4",
+              "name": "error_rate",
+              "value": "={{ $json.error_rate }}",
+              "type": "number"
+            },
+            {
+              "id": "4fe64c7e-486d-43ed-9d81-1e64336cddbd",
+              "name": "current_status",
+              "value": "={{ $json.current_status }}",
+              "type": "string"
+            },
+            {
+              "id": "1f00b940-ab24-4edb-a39d-57d85466ffc9",
+              "name": "decision",
+              "value": "deactivate",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -16,
+        144
+      ],
+      "id": "1242d0fa-b686-429e-b307-08117bb9934e",
+      "name": "Deactivate"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5fb77d51-7703-486a-beaa-4e0e0cdd23c5",
+              "name": "feature_id",
+              "value": "={{ $json.feature_id }}",
+              "type": "string"
+            },
+            {
+              "id": "aa8aa293-4181-474a-9aeb-b235700582c4",
+              "name": "error_rate",
+              "value": "={{ $json.error_rate }}",
+              "type": "number"
+            },
+            {
+              "id": "4fe64c7e-486d-43ed-9d81-1e64336cddbd",
+              "name": "current_status",
+              "value": "={{ $json.current_status }}",
+              "type": "string"
+            },
+            {
+              "id": "1f00b940-ab24-4edb-a39d-57d85466ffc9",
+              "name": "decision",
+              "value": "reenable",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -16,
+        320
+      ],
+      "id": "6d72d3b3-2d74-46fb-bdaa-ec28a41880ba",
+      "name": "Reenable"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        496
+      ],
+      "id": "26b59025-10e2-4198-9348-adcdcfac1718",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json) }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Goal:\nЗарегистрировать инцидент или recovery для feature {{$json.feature_id}}.\nТекущий error rate: {{$json.error_rate}} (threshold deactivate: 5%, threshold re-enable: 1%).\nТекущее состояние: {{$json.current_status}}.\nDecision из upstream: {{$json.decision}} (deactivate | reenable | noop).\n\nContext:\n- Decision уже посчитан upstream (в Switch-ноде) — твоя задача выполнить решение через MCP.\n- Available tools: get_feature_info, set_feature_state.\n- Threshold deactivate = 5%, re-enable = 1%. При decision=deactivate фича сейчас не Disabled. При decision=reenable фича сейчас Disabled.\n- НЕ принимай решение самостоятельно: следуй decision из payload. Это и есть Algorithm-before-AI — guards снаружи модели.\n\nAction:\n1. Вызови get_feature_info({{$json.feature_id}}) для актуального state (на случай гонки между Switch и AI Agent).\n2. Если decision=\"deactivate\":\n   - Проверь что status != \"Disabled\". Если уже Disabled — верни action_taken=\"no_op\", reason=\"already_disabled\" (защита от спама).\n   - Иначе вызови set_feature_state(target_state=\"Disabled\").\n   - Снова get_feature_info для верификации.\n3. Если decision=\"reenable\":\n   - Проверь что status == \"Disabled\". Если уже Enabled — верни action_taken=\"no_op\", reason=\"already_enabled\".\n   - Иначе вызови set_feature_state(target_state=\"Enabled\").\n   - Снова get_feature_info для верификации.\n4. Если decision=\"noop\" — ничего не делать, верни action_taken=\"no_op\", reason=\"within_threshold\".\n5. Сформируй короткий русский alert_message для Telegram.\n\nOutput:\nJSON строго по схеме:\n{\n  \"action_taken\": \"deactivated\" | \"reenabled\" | \"no_op\" | \"error\",\n  \"previous_state\": object | null,\n  \"new_state\": object | null,\n  \"alert_message\": string (1-2 предложения для Telegram),\n  \"error_rate_percent\": number,\n  \"threshold_used\": number,\n  \"reason\": string | null\n}\n\nConstraints:\n- alert_message:\n  - deactivate: \"🚨 Feature {{name}} деактивирована: error rate {{X}}% превысил порог {{Y}}%.\"\n  - reenable:   \"✅ Feature {{name}} восстановлена: error rate {{X}}% упал ниже {{Y}}%.\"\n  - no_op:      \"ℹ️ Feature {{name}} — без изменений (error rate {{X}}%, статус {{S}}).\"\n- НЕ вызывай set_feature_state если state уже соответствует целевому.\n- При ошибке от MCP — action_taken=\"error\" с reason содержащим сообщение от инструмента.\n- Если decision=\"noop\" — Telegram сообщение можно НЕ отправлять (см. в Switch ноде Telegram только на не-noop ветках).",
+          "maxIterations": 5,
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        304,
+        256
+      ],
+      "id": "9bcb533a-c46c-4499-905f-d5b52e704277",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-6",
+          "cachedResultName": "Claude Sonnet 4.6"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.5,
+      "position": [
+        256,
+        448
+      ],
+      "id": "67beb180-1e82-470a-826b-c9c4b40d8ae4",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "GtkqAf0hV9H38k4B",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://accurately-month-insured-rows.trycloudflare.com/mcp",
+        "authentication": "bearerAuth",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.2,
+      "position": [
+        384,
+        448
+      ],
+      "id": "c64830b7-8e64-4690-953f-75e0759d1c40",
+      "name": "MCP Client",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "bCTV2MSaGpiOApcA",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"required\": [\"action_taken\", \"alert_message\"],\n  \"properties\": {\n    \"action_taken\": {\"type\": \"string\", \"enum\": [\"deactivated\", \"reenabled\", \"no_op\", \"error\"]},\n    \"previous_state\": {\"type\": [\"object\", \"null\"]},\n    \"new_state\": {\"type\": [\"object\", \"null\"]},\n    \"alert_message\": {\"type\": \"string\"},\n    \"error_rate_percent\": {\"type\": \"number\"},\n    \"threshold_used\": {\"type\": \"number\"},\n    \"reason\": {\"type\": [\"string\", \"null\"]}\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        512,
+        448
+      ],
+      "id": "6fcb1355-db60-4fa8-b175-2b134296068c",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "chatId": "187287135",
+        "text": "={{ $json.output.alert_message }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        656,
+        256
+      ],
+      "id": "69a5bd4a-fcd8-4e57-8699-b5fb4173b6e0",
+      "name": "Send a text message",
+      "webhookId": "582aed71-dca1-4060-a768-746980c4d85a",
+      "credentials": {
+        "telegramApi": {
+          "id": "eRVd1h4DoUVHAgh8",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "GET Logs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read & Analyze Logs": {
+      "main": [
+        [
+          {
+            "node": "Init MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Logs": {
+      "main": [
+        [
+          {
+            "node": "Read & Analyze Logs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init MCP": {
+      "main": [
+        [
+          {
+            "node": "Get Feature Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Feature Status": {
+      "main": [
+        [
+          {
+            "node": "Merge Responses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Responses": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Deactivate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reenable",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deactivate": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reenable": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1664358d-0c81-4d74-9da4-bfa7df2fb73e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bdc094667060d4b4d0898ae18ec0e0a9330e4d05b16f3c97034f76e64e6b0381"
+  },
+  "id": "M8IEMgCdkrdTx4Pm",
+  "tags": []
+}

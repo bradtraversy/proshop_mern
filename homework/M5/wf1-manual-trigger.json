@@ -1,0 +1,396 @@
+{
+  "name": "[COURSE] manual job",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "feature-control",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -224,
+        0
+      ],
+      "id": "fa217949-2a74-47b3-a86e-c22960ef87b5",
+      "name": "Webhook",
+      "webhookId": "8b739ca2-6241-4390-92b6-a7e91b7a1117",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "BBNQWBRJxKJtRjyr",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.feature_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "empty",
+                      "singleValue": true
+                    },
+                    "id": "efed97ef-6df3-44da-9384-6f0abf7761ac"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "missing_feature_id"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "1db8a4cb-0bd6-4605-8f81-f13347806ced",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "empty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "missing_action"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "30177a4a-44ea-498d-8aa3-db2f640e5db6",
+                    "leftValue": "={{ ['check','test','rollback','rollout'].includes($json.body.action) }}",
+                    "rightValue": "=false",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "invalid_action"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "020ed50b-188f-42b7-936e-aa521aacdc1b",
+                    "leftValue": "={{ ($json.body.traffic_percentage !== undefined) && ($json.body.traffic_percentage < 0 || $json.body.traffic_percentage > 100) }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "invalid_traffic"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        -32
+      ],
+      "id": "755fade6-f257-4ce4-86b2-ee942fafe220",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"success\": false, \"message\": \"Validation error\", \"rejected_at\": \"input-validation\"}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        816,
+        0
+      ],
+      "id": "f795b8c4-69a6-49ac-8585-1f7409f96cfb",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.body) }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Goal:\nВыполни запрос пользователя по управлению feature flag ={{$json.body.feature_id}}.\n\nContext:\n- Текущее состояние feature flag получи через get_feature_info ПЕРЕД любыми изменениями.\n- Команда от UI: action={{$json.body.action}}, target_state={{$json.body.target_state}}, traffic_percentage={{$json.body.traffic_percentage}}.\n- Доступные actions: \"check\" (только чтение), \"test\" (перевести в Testing), \"rollback\" (Disabled), \"rollout\" (изменить traffic_percentage).\n- Available tools: get_feature_info, set_feature_state, adjust_traffic_rollout.\n\nAction:\n1. Если action=\"check\" — вызови get_feature_info и верни результат.\n2. Если action=\"test\" — get_feature_info → проверь что фича не Enabled → set_feature_state(Testing) → get_feature_info для верификации.\n3. Если action=\"rollback\" — get_feature_info → если уже Disabled, верни no_op → иначе set_feature_state(Disabled) → get_feature_info.\n4. Если action=\"rollout\" — get_feature_info → adjust_traffic_rollout(traffic_percentage) → get_feature_info.\n5. На любом шаге если invalid params (например, traffic_percentage не передан для action=\"rollout\") — верни ошибку без вызова инструментов.\n\nOutput:\nJSON строго по схеме:\n{\n  \"success\": boolean,\n  \"message\": string (краткое описание результата на русском, 1 предложение),\n  \"current_state\": {\n    \"id\": string,\n    \"name\": string,\n    \"status\": \"Enabled\" | \"Disabled\" | \"Testing\",\n    \"traffic_percentage\": number,\n    \"last_modified\": string (ISO 8601)\n  } | null,\n  \"rejected_at\": \"input-validation\" | \"tool-execution\" | null\n}\n\nConstraints:\n- traffic_percentage в диапазоне [0, 100]. Если получен -50 или 150 — отказ с message объяснения.\n- target_state из enum [Enabled, Disabled, Testing]. Если другое — отказ.\n- НЕ вызывай set_feature_state повторно если current_state.status уже соответствует целевому.\n- Если ошибка от MCP-инструмента — верни success=false с message от инструмента.",
+          "maxIterations": 5,
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        304,
+        144
+      ],
+      "id": "40b8d3a0-de4c-4fe2-8ecb-2d596087ac4f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-opus-4-6",
+          "mode": "list",
+          "cachedResultName": "Claude Opus 4.6"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.5,
+      "position": [
+        176,
+        336
+      ],
+      "id": "a080c0ea-208e-4a45-9162-fa6a4e24d929",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "GtkqAf0hV9H38k4B",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.feature_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        320,
+        336
+      ],
+      "id": "562c2841-784a-44f1-a72b-01f2e8f0abfc",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://inbox-heads-better-mazda.trycloudflare.com/mcp",
+        "authentication": "bearerAuth",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.2,
+      "position": [
+        608,
+        336
+      ],
+      "id": "9195a9aa-661c-40ea-9b00-8c7de22da5d9",
+      "name": "MCP Client",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "bCTV2MSaGpiOApcA",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"required\": [\"success\", \"message\"],\n  \"properties\": {\n    \"success\": {\"type\": \"boolean\"},\n    \"message\": {\"type\": \"string\"},\n    \"current_state\": {\n      \"type\": [\"object\", \"null\"],\n      \"properties\": {\n        \"id\": {\"type\": \"string\"},\n        \"name\": {\"type\": \"string\"},\n        \"status\": {\"type\": \"string\", \"enum\": [\"Enabled\", \"Disabled\", \"Testing\"]},\n        \"traffic_percentage\": {\"type\": \"number\"},\n        \"last_modified\": {\"type\": \"string\"}\n      }\n    },\n    \"rejected_at\": {\"type\": [\"string\", \"null\"]}\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        336
+      ],
+      "id": "732e61ba-7cc1-4de6-b621-a86d871b8170",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.output) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        816,
+        208
+      ],
+      "id": "93dcb324-840e-48a7-84b7-6613870fdc08",
+      "name": "Respond to Webhook1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "101999c1-1160-4e00-93c5-1d0e0c154ec1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bdc094667060d4b4d0898ae18ec0e0a9330e4d05b16f3c97034f76e64e6b0381"
+  },
+  "id": "fbYkIUMEqrEIug83",
+  "tags": []
+}

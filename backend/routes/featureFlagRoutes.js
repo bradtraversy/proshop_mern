@@ -52,6 +52,15 @@ router.patch('/:key', protect, admin, asyncHandler(async (req, res) => {
       throw new Error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`)
     }
     data[key].status = status
+
+    if (traffic_percentage === undefined) {
+      if (status === 'Enabled') data[key].traffic_percentage = 100
+      else if (status === 'Disabled') data[key].traffic_percentage = 0
+      else {
+        const tp = data[key].traffic_percentage
+        data[key].traffic_percentage = (Number.isInteger(tp) && tp >= 1 && tp <= 99) ? tp : 10
+      }
+    }
   }
 
   if (traffic_percentage !== undefined) {
