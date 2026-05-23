@@ -185,6 +185,7 @@ async function main() {
   console.log(`\nDone. ${pointId} vectors indexed in '${COLLECTION}'.`)
 }
 
-if (!process.argv.includes('--test') && !process.argv.includes('--dump')) {
+const invokedDirectly = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]
+if (invokedDirectly && !process.argv.includes('--test') && !process.argv.includes('--dump')) {
   main().catch(err => { console.error(err); process.exit(1) })
 }

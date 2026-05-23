@@ -11,7 +11,10 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "data:import": "node backend/seeder",
     "data:destroy": "node backend/seeder -d",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config homework/M6/stage2-fix-top3/jest.config.cjs",
+    "test": "npm run test:mcp-features && npm run test:mcp-rag",
+    "test:mcp-features": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config mcp-features/__tests__/jest.config.cjs",
+    "test:mcp-rag": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config mcp-rag/__tests__/jest.config.cjs",
+    "test:stage2": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config homework/M6/stage2-fix-top3/jest.config.cjs",
     "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix frontend && npm run build --prefix frontend"
   },
   "author": "Brad Traversy",
