@@ -1,10 +1,14 @@
 import express from 'express'
 import asyncHandler from 'express-async-handler'
+import { protect, admin } from '../middleware/authMiddleware.js'
 
 const router = express.Router()
 
 router.post(
   '/feature-control',
+  protect,
+  admin,
+  express.json({ limit: '16kb' }),
   asyncHandler(async (req, res) => {
     const base = process.env.N8N_WEBHOOK_URL
     const apiKey = process.env.N8N_API_KEY
@@ -25,7 +29,7 @@ router.post(
           ...(apiKey ? { 'X-API-Key': apiKey } : {}),
         },
         body: JSON.stringify(req.body || {}),
-        signal: AbortSignal.timeout(110000),
+        signal: AbortSignal.timeout(5000),
       })
     } catch (e) {
       const status = e.name === 'TimeoutError' ? 504 : 502
