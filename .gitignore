@@ -34,5 +34,8 @@ mcp-server-search-docs/dist/
 # Scripts
 scripts/node_modules/
 
-docs/project-data.idea/
+frontend/dist
+
+.idea
+docs/project-data
 docs/guides/

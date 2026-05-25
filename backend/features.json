@@ -2,9 +2,9 @@
   "search_v2": {
     "name": "New Search Algorithm",
     "description": "Replaces legacy regex-based keyword matching with a hybrid BM25 + TF-IDF ranking pipeline. Improves relevance for multi-word queries and handles common misspellings via fuzzy matching. Backend: new productController search path; index built on name, brand, category, description fields.",
-    "status": "Testing",
-    "traffic_percentage": 25,
-    "last_modified": "2026-05-06",
+    "status": "Disabled",
+    "traffic_percentage": 53,
+    "last_modified": "2026-05-18",
     "targeted_segments": [
       "beta_users",
       "internal"
@@ -40,8 +40,8 @@
     "name": "Redesigned Cart UI",
     "description": "Replaces the current two-column CartScreen layout with a streamlined single-page cart with inline quantity editing, animated item removal, and a persistent sticky order summary sidebar. Reduces the number of clicks needed to proceed to checkout by 40% in internal testing.",
     "status": "Testing",
-    "traffic_percentage": 10,
-    "last_modified": "2026-04-01",
+    "traffic_percentage": 43,
+    "last_modified": "2026-05-15",
     "targeted_segments": [
       "beta_users"
     ],
@@ -50,9 +50,9 @@
   "save_for_later": {
     "name": "Save Items for Later",
     "description": "Adds a 'Save for Later' action on cart items. Saved items are persisted to the user's profile (MongoDB userModel extension) and visible in a separate section below the active cart. Encourages purchase intent without session abandonment. Requires authenticated user; disabled for guests.",
-    "status": "Disabled",
-    "traffic_percentage": 0,
-    "last_modified": "2026-02-28",
+    "status": "Enabled",
+    "traffic_percentage": 41,
+    "last_modified": "2026-05-15",
     "targeted_segments": [
       "authenticated"
     ],
@@ -156,9 +156,9 @@
   "recently_viewed": {
     "name": "Recently Viewed Products",
     "description": "Tracks the last 6 products visited in the current session (localStorage) and renders a 'Recently Viewed' horizontal scroll row at the bottom of HomeScreen and ProductScreen. Purely client-side; no backend changes. Improves navigation and reduces time-to-repurchase for returning visitors.",
-    "status": "Enabled",
+    "status": "Disabled",
     "traffic_percentage": 100,
-    "last_modified": "2026-02-01",
+    "last_modified": "2026-05-15",
     "targeted_segments": [
       "all"
     ],
