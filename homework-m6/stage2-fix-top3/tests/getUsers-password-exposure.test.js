@@ -48,17 +48,18 @@ beforeEach(async () => {
 })
 
 describe('GET /api/users (getUsers)', () => {
-  // ---- TARGET behavior (will intentionally flip after the fix) ----
-  it('CURRENT BEHAVIOR: response leaks the bcrypt password hash for every user', async () => {
+  // ---- TARGET behavior — intentional behavior change, see
+  //      fix-1-getusers-password-exposure.md ----
+  // Pre-fix this asserted the password hash WAS present (the leak). After the
+  // .select('-password') fix, no user object may expose a password field.
+  it('does NOT leak the password hash for any user (fixed)', async () => {
     const res = await request(app)
       .get('/api/users')
       .set('Authorization', `Bearer ${tokenFor(admin._id)}`)
 
     expect(res.status).toBe(200)
     for (const u of res.body) {
-      // bcrypt hashes start with $2a/$2b and are 60 chars — the leak.
-      expect(typeof u.password).toBe('string')
-      expect(u.password).toMatch(/^\$2[aby]\$/)
+      expect(u.password).toBeUndefined()
     }
   })
 
