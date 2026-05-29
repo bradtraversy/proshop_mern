@@ -78,16 +78,20 @@ beforeEach(async () => {
 })
 
 describe('GET /api/orders/:id (getOrderById)', () => {
-  // ---- TARGET behavior (will intentionally flip after the fix) ----
-  it("CURRENT BEHAVIOR: a non-owner non-admin user can read another user's order", async () => {
+  // ---- TARGET behavior — intentional behavior change, see
+  //      fix-2-getorderbyid-idor.md ----
+  // Pre-fix this asserted the attacker got 200 + the owner's PII (the IDOR).
+  // After the fix a non-owner non-admin must be denied. We return 404 (not
+  // 403) so the endpoint does not disclose that the id exists.
+  it("denies a non-owner non-admin reading another user's order (fixed)", async () => {
     const res = await request(app)
       .get(`/api/orders/${order._id}`)
       .set('Authorization', `Bearer ${tokenFor(attacker._id)}`)
 
-    expect(res.status).toBe(200)
-    // Leaks PII: shipping address + owner email via populate.
-    expect(res.body.shippingAddress.address).toBe('123 Market St')
-    expect(res.body.user.email).toBe('owner@proshop.test')
+    expect(res.status).toBe(404)
+    // No PII leaked in the body.
+    expect(res.body.shippingAddress).toBeUndefined()
+    expect(res.body.user).toBeUndefined()
   })
 
   // ---- CONTROL behavior (must stay green after the fix) ----
