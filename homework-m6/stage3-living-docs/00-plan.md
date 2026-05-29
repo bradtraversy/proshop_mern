@@ -39,33 +39,33 @@
 
 ## Phase 3 — REVERSE ENGINEERING (no specialist re-dispatch — findings reused from Stage 1)
 
-- [ ] 3.0 Reuse `stage1-code-review/synthesis.md` as findings input (specialists already ran).
-- [ ] 3.4 4-step reverse engineering (UNDERSTAND → DECISION TABLE → SEQUENCE DIAGRAM → EDGE CASES) per module → `docs/specs/<module>-spec.md`. Proposed module set (serial, small repo):
-  - [ ] `mcp-server-feature-flags` (`src/index.ts`) — **required for Stage 4**
-  - [ ] `mcp-server-search-docs` (`src/index.ts`, RAG) — **required for Stage 4**
-  - [ ] `backend/controllers/featureFlagController.js` — dual-writer hotspot (synthesis MED + ADR-0005 candidate)
-  - [ ] `backend/controllers/orderController.js` — IDOR fix + client-trusted pricing (ADR-0004 candidate)
-  - [ ] `backend/controllers/userController.js` — password-projection fix + auth flows
+- [x] 3.0 Reuse `stage1-code-review/synthesis.md` as findings input (specialists already ran).
+- [x] 3.4 4-step reverse engineering (UNDERSTAND → DECISION TABLE → SEQUENCE DIAGRAM → EDGE CASES) per module → `docs/specs/<module>-spec.md`. Proposed module set (serial, small repo):
+  - [x] `mcp-server-feature-flags` (`src/index.ts`) — **required for Stage 4**
+  - [x] `mcp-server-search-docs` (`src/index.ts`, RAG) — **required for Stage 4**
+  - [x] `backend/controllers/featureFlagController.js` — dual-writer hotspot (synthesis MED + ADR-0005 candidate)
+  - [x] `backend/controllers/orderController.js` — IDOR fix + client-trusted pricing (ADR-0004 candidate)
+  - [x] `backend/controllers/userController.js` — password-projection fix + auth flows
   > Specs land in repo `docs/specs/` (working location) and are copied to submission `docs-new/specs/` in 3.7.
 
 ## Phase 4 — AGGREGATE
 
-- [ ] 4.1 `stage3-synthesis.md` — combine the 5 specs + the reused Stage-1 findings into one Stage-3 report (Stage-1 `synthesis.md` stays read-only — it is a graded artifact).
-- [ ] 4.2 Build `project-index.json` at repo root (machine-readable map; schema below).
-- [ ] 4.3 Assemble NEW `docs/` from audit verdicts:
+- [x] 4.1 `stage3-synthesis.md` — combine the 5 specs + the reused Stage-1 findings into one Stage-3 report (Stage-1 `synthesis.md` stays read-only — it is a graded artifact).
+- [x] 4.2 Build `project-index.json` at repo root (machine-readable map; schema below).
+- [x] 4.3 Assemble NEW `docs/` from audit verdicts:
   - copy ✅ unchanged; copy 🔄 with `TODO(audit-2026-05-29): …` markers (esp. the 3 security-fix API docs)
   - new `docs/specs/` (Phase 3), new `docs/architecture/README.md` overview (links dev-history + incidents), `docs/README.md` index
   - keep canonical ADR numbering: `docs/adr/0001-0003`; carry the still-valid older ADRs (adr-001 amended, adr-002, adr-004) with TODO markers; adr-003/adr-005 archived
-- [ ] 4.4 Archive 📦 + ❌ items → `docs-archived-2026-05-29/` (via `git mv`, never `rm`)
-- [ ] 4.5 New structure becomes repo `docs/` (build in `docs-new/`, swap after archive)
+- [x] 4.4 Archive 📦 + ❌ items → `docs-archived-2026-05-29/` (via `git mv`, never `rm`)
+- [x] 4.5 New structure becomes repo `docs/` (build in `docs-new/`, swap after archive)
 
 ## Phase 5 — AUTOMATE
 
-- [ ] 5.1 Copy `update_project_index.py` → `.claude/scripts/`, `chmod +x`
-- [ ] 5.2 Set `WATCH_PATHS = ("backend/", "frontend/src/", "mcp-server-feature-flags/", "mcp-server-search-docs/")`
-- [ ] 5.3 (optional) PostToolUse + SessionStart hook in `.claude/settings.local.json`; smoke-test → `hook-screenshot.png`
-- [ ] 5.4 Create `CLAUDE.md` (root) with the two sections («⭐ START HERE» + «⭐ Keeping project-index.json current»); mirror the key parts into `.github/copilot-instructions.md` (your decision: both files)
-- [ ] 5.5 Copy deliverables into submission folder (Шаг 3.7): project-index.json, update script, `docs-new/`, `docs-archived/`, CLAUDE.md copy
+- [x] 5.1 Copy `update_project_index.py` → `.claude/scripts/`, `chmod +x`
+- [x] 5.2 Set `WATCH_PATHS = ("backend/", "frontend/src/", "mcp-server-feature-flags/", "mcp-server-search-docs/")`
+- [x] 5.3 (optional) PostToolUse + SessionStart hook in `.claude/settings.local.json`; smoke-test → `hook-screenshot.png`
+- [x] 5.4 Create `CLAUDE.md` (root) with the two sections («⭐ START HERE» + «⭐ Keeping project-index.json current»); mirror the key parts into `.github/copilot-instructions.md` (your decision: both files)
+- [x] 5.5 Copy deliverables into submission folder (Шаг 3.7): project-index.json, update script, `docs-new/`, `docs-archived/`, CLAUDE.md copy
 
 ## project-index.json — planned shape (fork-accurate, NOT the course example)
 
@@ -96,3 +96,15 @@ last_updated: ISO-8601 UTC
 ---
 
 > **Plan ready.** Review `docs-audit.md` (the per-doc verdicts — the most important decision here) and this plan's TODOs + open questions. On approval I switch to EXECUTE mode and run Phase 3-5, ticking checkboxes as I go. Nothing is moved/archived until then.
+
+---
+
+## Execution log (2026-05-29, EXECUTE mode)
+
+- ✅ Phase 3.4 — 5 module specs written (`docs/specs/`) via parallel sub-agents (≥14 edge cases each, mermaid each).
+- ✅ Phase 4.1 — `stage3-synthesis.md` written (specs + reused Stage-1 findings; Stage-1 synthesis untouched).
+- ✅ Phase 4.2 — `project-index.json` built (fork-accurate) + validated + tree auto-populated.
+- ✅ Phase 4.3 — new `docs/` assembled: 23 ✅ as-is, 18 🔄 with `TODO(audit-2026-05-29)` markers (32 files), new README/architecture overview/ADR-0004.
+- ✅ Phase 4.4/4.5 — archived 📦/❌ (12 files) → `docs-archived-2026-05-29/`; swapped new structure into `docs/`.
+- ✅ Phase 5 — update script installed (`WATCH_PATHS` adapted) + standalone-tested; PostToolUse+SessionStart hook in `.claude/settings.local.json` + code-path verified (`hook-verification.txt`); `CLAUDE.md` + `.github/copilot-instructions.md` sections added.
+- ✅ Step 3.7 — deliverables copied to submission folder.

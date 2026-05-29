@@ -1,0 +1,16 @@
+# Hook verification — update_project_index.py PostToolUse path
+# Date: 2026-05-29
+# NOTE: a real screenshot/live-hook run isn't possible from this non-interactive session
+#       (hooks load at CC session start). This exercises the EXACT code path the hook runs
+#       by piping a PostToolUse payload to the script, with a genuine structural change.
+
+$ mkdir -p backend/services   # create a structural change under a watched path
+
+$ echo '{PostToolUse Write payload}' | python3 .claude/scripts/update_project_index.py
+[update-index hook] triggered by Write on backend/services/_hooktest.js
+[update-index hook] ✅ updated project-index.json (tree + last_updated)
+
+# cleanup (remove throwaway), then re-run shows the tree settles back:
+$ echo '{PostToolUse Bash rm payload}' | python3 .claude/scripts/update_project_index.py
+[update-index hook] triggered by Bash
+[update-index hook] ✅ updated project-index.json (tree + last_updated)

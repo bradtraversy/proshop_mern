@@ -1,5 +1,19 @@
 # Copilot Instructions — ProShop MERN
 
+## ⭐ START HERE — repo navigation
+
+**ALWAYS read `project-index.json` (repo root) FIRST.** It is the machine-readable map:
+`subprojects` (backend, frontend, the two Node/TS MCP servers, scripts), `system_folders`,
+`hard_rules`, `ai_routing`, and a depth-4 `filesystem_tree`. Faster and more accurate than
+`find`/`ls`. Module internals → `docs/specs/`; decisions → `docs/adr/`; full agent rules → `CLAUDE.md`.
+
+## ⭐ Keeping project-index.json current — MANDATORY
+
+After creating/deleting/renaming files or folders, or changing a subproject's purpose, run
+`python3 .claude/scripts/update_project_index.py` (or rely on the PostToolUse hook in
+`.claude/settings.local.json`). Re-ingest the RAG corpus `docs/project-data/chunks.jsonl` after
+doc edits so the search-docs MCP stays accurate.
+
 ## Design rules: see ./DESIGN.md
 
 ## 1. Overview

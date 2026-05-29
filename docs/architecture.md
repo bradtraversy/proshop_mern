@@ -1,3 +1,7 @@
+> **TODO(audit-2026-05-29):** Frontend nodes still name screens/*.js — now *.jsx under frontend/src/components/good-shop (Tailwind v4 + shadcn). Diagram omits the search-docs RAG/pgvector container and the feature-flags MCP container — add both.
+>
+> _Marker added during M6 Stage 3 living-docs audit. Behavioural content below verified accurate; only the noted parts are stale._
+
 # C4 Container Diagram — ProShop MERN
 
 ## Use-case: Customer places an order and pays via PayPal

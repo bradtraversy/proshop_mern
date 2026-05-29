@@ -1,0 +1,542 @@
+{
+  "name": "proshop_mern",
+  "type": "fullstack-monorepo",
+  "description": "MERN e-commerce fork (Brad Traversy proshop) extended for the AI-dev course with two Node/TypeScript MCP servers (feature-flags + search-docs RAG) and a polyglot data layer.",
+  "tech_stack": {
+    "backend": "Node.js + Express 4.17 + Mongoose 5.10 (MongoDB), ES modules",
+    "frontend": "React 18 + Redux 4 (thunk) + React Router v5, Tailwind v4 + shadcn-style components, Vite 6",
+    "feature_flags_mcp": "Node + TypeScript MCP server (stdio), @modelcontextprotocol/sdk",
+    "search_docs_mcp": "Node + TypeScript MCP server (RAG): OpenAI embeddings + PostgreSQL/pgvector (pg)",
+    "databases": [
+      "MongoDB (orders/users/products)",
+      "backend/features.json (feature flags)",
+      "PostgreSQL + pgvector (RAG embeddings)"
+    ],
+    "auth": "JWT (jsonwebtoken) + bcryptjs"
+  },
+  "subprojects": {
+    "backend": {
+      "path": "backend/",
+      "description": "Express REST API: auth, products, orders, uploads, feature flags. Controller -> Mongoose model (no service layer).",
+      "entry": "backend/server.js",
+      "port": 5001,
+      "tech": "Node + Express 4 + Mongoose 5 (ESM)",
+      "key_paths": {
+        "server": "backend/server.js",
+        "config": "backend/config/db.js",
+        "controllers": "backend/controllers/",
+        "routes": "backend/routes/",
+        "middleware": "backend/middleware/",
+        "models": "backend/models/",
+        "utils": "backend/utils/",
+        "seeder": "backend/seeder.js",
+        "feature_flags_data": "backend/features.json"
+      }
+    },
+    "frontend": {
+      "path": "frontend/",
+      "description": "React SPA storefront + admin. Redux thunk store; Tailwind v4 + shadcn-style components under src/components/good-shop/.",
+      "entry": "frontend/src/index.js",
+      "port": 3000,
+      "tech": "React 18 + Redux 4 + React Router v5 + Vite 6 + Tailwind v4",
+      "key_paths": {
+        "app_shell": "frontend/src/App.js",
+        "store": "frontend/src/store.js",
+        "actions": "frontend/src/actions/",
+        "reducers": "frontend/src/reducers/",
+        "screens": "frontend/src/screens/",
+        "components": "frontend/src/components/",
+        "design_system_components": "frontend/src/components/good-shop/"
+      }
+    },
+    "mcp-server-feature-flags": {
+      "path": "mcp-server-feature-flags/",
+      "description": "MCP server (Node/TypeScript, stdio) exposing feature-flag tools that read/write backend/features.json. Second writer of that file alongside the backend controller.",
+      "entry": "mcp-server-feature-flags/src/index.ts",
+      "tech": "Node + TypeScript + @modelcontextprotocol/sdk + zod",
+      "key_paths": {
+        "source": "mcp-server-feature-flags/src/index.ts",
+        "build": "mcp-server-feature-flags/dist/index.js",
+        "spec": "docs/specs/feature-flags-mcp-spec.md"
+      }
+    },
+    "mcp-server-search-docs": {
+      "path": "mcp-server-search-docs/",
+      "description": "RAG MCP server (Node/TypeScript): embeds a query via OpenAI and runs a pgvector similarity search over the project-docs corpus.",
+      "entry": "mcp-server-search-docs/src/index.ts",
+      "tech": "Node + TypeScript + OpenAI + pg (PostgreSQL/pgvector)",
+      "key_paths": {
+        "source": "mcp-server-search-docs/src/index.ts",
+        "build": "mcp-server-search-docs/dist/index.js",
+        "spec": "docs/specs/search-docs-rag-mcp-spec.md",
+        "corpus": "docs/project-data/chunks.jsonl"
+      }
+    },
+    "scripts": {
+      "path": "scripts/",
+      "description": "Node RAG ingestion pipeline: chunk markdown -> embed -> search over pgvector.",
+      "tech": "Node",
+      "key_paths": {
+        "chunk": "scripts/chunk_markdown.js",
+        "embed": "scripts/embed_chunks.js",
+        "search": "scripts/search_chunks.js"
+      }
+    }
+  },
+  "system_folders": {
+    ".claude/": "Claude Code config: agent definitions, scripts, settings",
+    ".claude/agents/": "Sub-agent definitions (security/performance/architecture/legacy-auditor/test-writer mates)",
+    ".claude/scripts/": "Maintenance scripts incl. update_project_index.py",
+    ".github/": "GitHub config incl. copilot-instructions.md (agent rules)",
+    "docs/": "Living documentation: README index, architecture, specs, adr, api, features, pages, runbooks, guides, design, project-data",
+    "docs/specs/": "Per-module 4-step reverse-engineering specs",
+    "docs/adr/": "Architecture Decision Records (canonical 0001-0004 + carried adr-001/002/004)",
+    "docs-archived-2026-05-29/": "Historical/superseded docs archived during the M6 Stage 3 audit (never deleted)",
+    "uploads/": "User-uploaded files served at /uploads (admin-only upload since 2026-05-29)",
+    "homework-m6/": "M6 homework submission artifacts (out of scope for code/docs audit)"
+  },
+  "root_files": {
+    "README.md": "Project overview, tech stack, setup",
+    "DESIGN.md": "Tailwind v4 design tokens + visual direction (primary design source)",
+    "FINDINGS.md": "Risk register / earlier-module audit findings",
+    "package.json": "Root npm scripts (server, client, dev, data:import/destroy)",
+    "docker-compose.yml": "MongoDB + (RAG Postgres) services",
+    ".mcp.json / .copilot/mcp.json": "MCP server registration (feature-flags + search-docs)",
+    ".env.example": "Environment variable template (canonical variable list)",
+    "CLAUDE.md": "Agent rules: START HERE navigation + project-index maintenance",
+    "project-index.json": "This file — machine-readable repo map"
+  },
+  "hard_rules": [
+    "ALWAYS read project-index.json FIRST at session start for repo structure.",
+    "Feature flags: use the feature-flags MCP tools; never hand-edit backend/features.json directly (two writers race on it).",
+    "Docs search: use the search-docs MCP (search_project_docs); the corpus is docs/project-data/chunks.jsonl and must be re-ingested after doc edits.",
+    "Preserve behavior on refactors — write characterization tests first (Vitest + supertest + mongodb-memory-server); the app has no other test suite.",
+    "Use Conventional Commits (feat:, fix:, docs:, chore:, refactor:, test:).",
+    "Never commit .env — .env.example is the canonical variable list.",
+    "Persistence is polyglot (MongoDB + features.json + Postgres/pgvector) — do not assume Mongo-only (adr-001 is deviated).",
+    "Order pricing and updateOrderToPaid are still client-trusted — do not rely on them as authoritative (open findings)."
+  ],
+  "ai_routing": {
+    "feature_flag_queries": "feature-flags MCP get/read tools (not direct features.json reads)",
+    "feature_flag_changes": "feature-flags MCP set/update tools",
+    "docs_search": "search-docs MCP search_project_docs (not grep + read)",
+    "structure_questions": "this project-index.json (do not walk the tree)",
+    "api_design": "docs/api/ (per-resource specs)",
+    "module_internals": "docs/specs/ (4-step reverse-engineering specs)"
+  },
+  "filesystem_tree": {
+    ".": [
+      ".claude",
+      ".copilot",
+      ".dockerignore",
+      ".env",
+      ".env.example",
+      ".github",
+      ".gitignore",
+      "CLAUDE.md",
+      "DESIGN.md",
+      "Dockerfile",
+      "FINDINGS.md",
+      "Procfile",
+      "README.md",
+      "backend",
+      "docker-compose.yml",
+      "docs",
+      "docs-archived-2026-05-29",
+      "frontend",
+      "homework",
+      "homework-m6",
+      "homework-m6.md",
+      "mcp-server-feature-flags",
+      "mcp-server-search-docs",
+      "package-lock.json",
+      "package.json",
+      "project-index.json",
+      "scripts",
+      "uploads",
+      "vitest.config.js"
+    ],
+    ".copilot": [
+      "mcp.json"
+    ],
+    "frontend": [
+      "Dockerfile",
+      "README.md",
+      "index.html",
+      "package-lock.json",
+      "package.json",
+      "public",
+      "src",
+      "vite.config.js"
+    ],
+    "frontend/public": [
+      "favicon.ico",
+      "images",
+      "logo192.png",
+      "logo512.png",
+      "manifest.json",
+      "robots.txt"
+    ],
+    "frontend/public/images": [
+      "airpods.jpg",
+      "alexa.jpg",
+      "camera.jpg",
+      "mouse.jpg",
+      "phone.jpg",
+      "playstation.jpg",
+      "sample.jpg"
+    ],
+    "frontend/src": [
+      "App.jsx",
+      "actions",
+      "components",
+      "constants",
+      "index.css",
+      "lib",
+      "main.jsx",
+      "reducers",
+      "screens",
+      "store.js"
+    ],
+    "frontend/src/constants": [
+      "cartConstants.js",
+      "featureConstants.js",
+      "orderConstants.js",
+      "productConstants.js",
+      "userConstants.js"
+    ],
+    "frontend/src/screens": [
+      "CartScreen.jsx",
+      "FeatureDashboardScreen.jsx",
+      "HomeScreen.jsx",
+      "LoginScreen.jsx",
+      "OrderListScreen.jsx",
+      "OrderScreen.jsx",
+      "PaymentScreen.jsx",
+      "PlaceOrderScreen.jsx",
+      "ProductEditScreen.jsx",
+      "ProductListScreen.jsx",
+      "ProductScreen.jsx",
+      "ProfileScreen.jsx",
+      "RegisterScreen.jsx",
+      "ShippingScreen.jsx",
+      "UserEditScreen.jsx",
+      "UserListScreen.jsx"
+    ],
+    "frontend/src/components": [
+      "CheckoutSteps.jsx",
+      "Footer.jsx",
+      "FormContainer.jsx",
+      "Header.jsx",
+      "Loader.jsx",
+      "Message.jsx",
+      "Meta.jsx",
+      "Paginate.jsx",
+      "Product.jsx",
+      "ProductCarousel.jsx",
+      "Rating.jsx",
+      "SearchBox.jsx",
+      "ui"
+    ],
+    "frontend/src/components/ui": [
+      "alert.jsx",
+      "badge.jsx",
+      "button.jsx",
+      "card.jsx",
+      "input.jsx",
+      "label.jsx",
+      "select.jsx",
+      "separator.jsx",
+      "skeleton.jsx",
+      "slider.jsx",
+      "table.jsx"
+    ],
+    "frontend/src/actions": [
+      "cartActions.js",
+      "featureActions.js",
+      "orderActions.js",
+      "productActions.js",
+      "userActions.js"
+    ],
+    "frontend/src/lib": [
+      "utils.js"
+    ],
+    "frontend/src/reducers": [
+      "cartReducers.js",
+      "featureReducers.js",
+      "orderReducers.js",
+      "productReducers.js",
+      "userReducers.js"
+    ],
+    "homework-m6": [
+      "stage1-code-review",
+      "stage2-fix-top3",
+      "stage3-living-docs",
+      "stage4-tests-agent"
+    ],
+    "homework-m6/stage4-tests-agent": [],
+    "homework-m6/stage2-fix-top3": [
+      "fix-1-getusers-password-exposure.md",
+      "fix-2-getorderbyid-idor.md",
+      "fix-3-public-upload.md",
+      "test-run-output.txt",
+      "tests"
+    ],
+    "homework-m6/stage2-fix-top3/tests": [
+      "getOrderById-idor.test.js",
+      "getUsers-password-exposure.test.js",
+      "helpers",
+      "upload-public-access.test.js"
+    ],
+    "homework-m6/stage2-fix-top3/tests/helpers": [
+      "testApp.js"
+    ],
+    "homework-m6/stage3-living-docs": [
+      "00-plan.md",
+      "docs-audit.md",
+      "hook-verification.txt",
+      "stage3-synthesis.md"
+    ],
+    "homework-m6/stage1-code-review": [
+      "architecture-findings.jsonl",
+      "architecture-review.md",
+      "performance-findings.jsonl",
+      "performance-review.md",
+      "security-findings.jsonl",
+      "security-review.md",
+      "synthesis.md"
+    ],
+    ".claude": [
+      "agents",
+      "scripts",
+      "settings.local.json"
+    ],
+    ".claude/agents": [
+      "README.md",
+      "architecture-mate.md",
+      "legacy-auditor-mate.md",
+      "performance-mate.md",
+      "security-mate.md",
+      "templates",
+      "test-writer-mate.md"
+    ],
+    ".claude/agents/templates": [
+      "docs-audit.template.md"
+    ],
+    ".claude/scripts": [
+      "update_project_index.py"
+    ],
+    "uploads": [
+      "Screen Shot 2020-09-29 at 5.50.52 PM.png",
+      "file.txt"
+    ],
+    "backend": [
+      "config",
+      "controllers",
+      "data",
+      "features.json",
+      "middleware",
+      "models",
+      "routes",
+      "seeder.js",
+      "server.js",
+      "utils"
+    ],
+    "backend/middleware": [
+      "authMiddleware.js",
+      "errorMiddleware.js"
+    ],
+    "backend/config": [
+      "db.js"
+    ],
+    "backend/utils": [
+      "generateToken.js"
+    ],
+    "backend/models": [
+      "orderModel.js",
+      "productModel.js",
+      "userModel.js"
+    ],
+    "backend/controllers": [
+      "featureFlagController.js",
+      "orderController.js",
+      "productController.js",
+      "userController.js"
+    ],
+    "backend/data": [
+      "products.js",
+      "users.js"
+    ],
+    "backend/routes": [
+      "featureFlagRoutes.js",
+      "orderRoutes.js",
+      "productRoutes.js",
+      "uploadRoutes.js",
+      "userRoutes.js"
+    ],
+    "docs": [
+      "README.md",
+      "adr",
+      "api",
+      "architecture",
+      "architecture.md",
+      "design",
+      "features",
+      "guides",
+      "pages",
+      "project-data",
+      "runbooks",
+      "specs"
+    ],
+    "docs/design": [
+      "DESIGN.md",
+      "anti-slop-supplement.md"
+    ],
+    "docs/adr": [
+      "0001-stateless-jwt-auth-with-localstorage.md",
+      "0002-client-trusted-paypal-payment-verification.md",
+      "0003-no-database-migration-tooling.md",
+      "0004-tailwind-v4-design-system-migration.md",
+      "adr-001-mongodb-vs-postgres.md",
+      "adr-002-redux-vs-context.md",
+      "adr-004-paypal-vs-stripe.md"
+    ],
+    "docs/specs": [
+      "feature-flags-mcp-spec.md",
+      "featureFlagController-spec.md",
+      "orderController-spec.md",
+      "search-docs-rag-mcp-spec.md",
+      "userController-spec.md"
+    ],
+    "docs/features": [
+      "admin.md",
+      "auth.md",
+      "cart.md",
+      "catalog.md",
+      "checkout.md",
+      "payments.md"
+    ],
+    "docs/runbooks": [
+      "ab-test-setup.md",
+      "db-seed-and-reset.md",
+      "deploy.md",
+      "feature-flag-toggle.md",
+      "incident-response.md",
+      "local-setup.md"
+    ],
+    "docs/project-data": [
+      "architecture.md",
+      "best-practices.md",
+      "chunks.jsonl",
+      "feature-flags-spec.md",
+      "features-analysis-ru.md",
+      "features.json",
+      "glossary.md"
+    ],
+    "docs/architecture": [
+      "README.md"
+    ],
+    "docs/guides": [
+      "chunking-strategies-guide-en.md",
+      "chunking-strategies-guide.md",
+      "embedding-models-2026-guide-en.md",
+      "embedding-models-2026-guide.md",
+      "grep-lsp-agents-md-guide-en.md",
+      "grep-lsp-agents-md-guide.md",
+      "mcp-design-principles-en.md",
+      "mcp-design-principles.md",
+      "mcp-vs-cli-vs-skills-decision-framework-en.md",
+      "mcp-vs-cli-vs-skills-decision-framework.md",
+      "vector-db-comparison-2026-en.md",
+      "vector-db-comparison-2026.md"
+    ],
+    "docs/api": [
+      "auth.md",
+      "orders.md",
+      "products.md",
+      "uploads.md",
+      "users.md"
+    ],
+    "docs/pages": [
+      "INDEX.md",
+      "admin-orders.md",
+      "admin-product-edit.md",
+      "admin-products.md",
+      "admin-user-edit.md",
+      "admin-users.md",
+      "cart.md",
+      "home.md",
+      "login.md",
+      "order.md",
+      "payment.md",
+      "place-order.md",
+      "product.md",
+      "profile.md",
+      "register.md",
+      "shipping.md"
+    ],
+    "homework": [
+      "M4"
+    ],
+    "homework/M4": [
+      "README.md"
+    ],
+    "scripts": [
+      "chunk_markdown.js",
+      "embed_chunks.js",
+      "package-lock.json",
+      "package.json",
+      "search_chunks.js"
+    ],
+    ".github": [
+      "copilot-instructions.md"
+    ],
+    "mcp-server-search-docs": [
+      "Dockerfile",
+      "package-lock.json",
+      "package.json",
+      "src",
+      "tsconfig.json"
+    ],
+    "mcp-server-search-docs/src": [
+      "index.ts"
+    ],
+    "mcp-server-feature-flags": [
+      "Dockerfile",
+      "package-lock.json",
+      "package.json",
+      "src",
+      "tsconfig.json"
+    ],
+    "mcp-server-feature-flags/src": [
+      "index.ts"
+    ],
+    "docs-archived-2026-05-29": [
+      "DESIGN_SYSTEM.md",
+      "adrs",
+      "design-system-pack-example",
+      "incidents",
+      "project-data",
+      "report.md"
+    ],
+    "docs-archived-2026-05-29/project-data": [
+      "dev-history.md"
+    ],
+    "docs-archived-2026-05-29/design-system-pack-example": [
+      "README.md",
+      "design-system.css",
+      "design-system.json",
+      "design-system.md"
+    ],
+    "docs-archived-2026-05-29/adrs": [
+      "adr-003-jwt-vs-session.md",
+      "adr-005-bootstrap-vs-tailwind.md"
+    ],
+    "docs-archived-2026-05-29/incidents": [
+      "i-001-paypal-double-charge.md",
+      "i-002-mongo-connection-pool-exhaustion.md",
+      "i-003-jwt-secret-leak.md"
+    ]
+  },
+  "last_updated": "2026-05-29T16:24:17.264022+00:00"
+}

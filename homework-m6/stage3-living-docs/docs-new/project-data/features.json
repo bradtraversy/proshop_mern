@@ -1,0 +1,232 @@
+{
+  "search_v2": {
+    "name": "New Search Algorithm",
+    "description": "Replaces legacy regex-based keyword matching with a hybrid BM25 + TF-IDF ranking pipeline. Improves relevance for multi-word queries and handles common misspellings via fuzzy matching. Backend: new productController search path; index built on name, brand, category, description fields.",
+    "status": "Testing",
+    "traffic_percentage": 15,
+    "last_modified": "2026-03-10",
+    "targeted_segments": ["beta_users", "internal"],
+    "rollout_strategy": "canary"
+  },
+  "semantic_search": {
+    "name": "Semantic Vector Search",
+    "description": "Augments keyword search with embedding-based semantic similarity. Products are encoded at index time; queries are embedded at runtime and matched via cosine similarity. Requires search_v2 to be Enabled first. Significantly improves discovery for natural-language queries like 'good headphones for running'.",
+    "status": "Disabled",
+    "traffic_percentage": 0,
+    "last_modified": "2026-02-14",
+    "targeted_segments": ["internal"],
+    "rollout_strategy": "canary",
+    "dependencies": ["search_v2"]
+  },
+  "search_autosuggest": {
+    "name": "Search Autocomplete / Autosuggest",
+    "description": "Adds a real-time dropdown of suggested queries and product names as the user types in the SearchBox component. Debounced at 250ms; calls a lightweight /api/products/suggest endpoint. Improves time-to-first-result and reduces zero-result searches.",
+    "status": "Testing",
+    "traffic_percentage": 25,
+    "last_modified": "2026-03-22",
+    "targeted_segments": ["all"],
+    "rollout_strategy": "canary"
+  },
+  "cart_redesign": {
+    "name": "Redesigned Cart UI",
+    "description": "Replaces the current two-column CartScreen layout with a streamlined single-page cart with inline quantity editing, animated item removal, and a persistent sticky order summary sidebar. Reduces the number of clicks needed to proceed to checkout by 40% in internal testing.",
+    "status": "Testing",
+    "traffic_percentage": 10,
+    "last_modified": "2026-04-01",
+    "targeted_segments": ["beta_users"],
+    "rollout_strategy": "ab_test"
+  },
+  "save_for_later": {
+    "name": "Save Items for Later",
+    "description": "Adds a 'Save for Later' action on cart items. Saved items are persisted to the user's profile (MongoDB userModel extension) and visible in a separate section below the active cart. Encourages purchase intent without session abandonment. Requires authenticated user; disabled for guests.",
+    "status": "Disabled",
+    "traffic_percentage": 0,
+    "last_modified": "2026-02-28",
+    "targeted_segments": ["authenticated"],
+    "rollout_strategy": "canary",
+    "dependencies": ["cart_redesign"]
+  },
+  "guest_cart_persistence": {
+    "name": "Guest Cart Persistence Across Sessions",
+    "description": "Extends localStorage cart state to survive browser tab closes and restores on next visit for unauthenticated users. Currently cart is already stored in localStorage but cleared on certain navigation paths. This flag enables the full recovery flow including a 'Welcome back — you left items in your cart' banner.",
+    "status": "Enabled",
+    "traffic_percentage": 100,
+    "last_modified": "2026-01-15",
+    "targeted_segments": ["guests"],
+    "rollout_strategy": "full_release"
+  },
+  "express_checkout": {
+    "name": "Express One-Click Checkout",
+    "description": "Allows authenticated users with a saved shipping address and payment method to bypass the multi-step checkout flow (ShippingScreen → PaymentScreen → PlaceOrderScreen) and place an order in a single click from the cart or product page. Reduces checkout abandonment for returning customers.",
+    "status": "Disabled",
+    "traffic_percentage": 0,
+    "last_modified": "2026-03-05",
+    "targeted_segments": ["returning_customers"],
+    "rollout_strategy": "canary",
+    "dependencies": ["guest_cart_persistence"]
+  },
+  "multi_step_checkout_v2": {
+    "name": "Redesigned Multi-Step Checkout",
+    "description": "Replaces the current 4-step linear checkout (CheckoutSteps component) with a validated stepper that shows a progress indicator, allows backward navigation without data loss, and provides inline address validation. Shipping, payment, and order review are on separate animated panels rather than full page redirects.",
+    "status": "Testing",
+    "traffic_percentage": 20,
+    "last_modified": "2026-04-10",
+    "targeted_segments": ["all"],
+    "rollout_strategy": "ab_test"
+  },
+  "gift_message": {
+    "name": "Gift Message at Checkout",
+    "description": "Adds an optional gift message textarea on the PlaceOrderScreen. The message is stored on the Order document (orderModel extension: giftMessage: String) and printed on the packing slip. Increases average order value for gift-occasion purchases.",
+    "status": "Disabled",
+    "traffic_percentage": 0,
+    "last_modified": "2026-02-20",
+    "targeted_segments": ["all"],
+    "rollout_strategy": "full_release"
+  },
+  "paypal_express_buttons": {
+    "name": "PayPal Express Checkout Buttons",
+    "description": "Surfaces PayPal Smart Payment Buttons on the cart page and product detail page (in addition to the standard checkout flow). Users can complete purchase without filling out shipping/payment forms if their PayPal account has an address on file. Uses the existing PayPal SDK integration in orderController.",
+    "status": "Enabled",
+    "traffic_percentage": 100,
+    "last_modified": "2026-01-08",
+    "targeted_segments": ["all"],
+    "rollout_strategy": "full_release"
+  },
+  "apple_pay": {
+    "name": "Apple Pay / Web Payments API",
+    "description": "Enables the Web Payments Request API for Safari users on Apple devices. Shows an Apple Pay button on PaymentScreen alongside the existing PayPal option (the Stripe radio button currently commented out). Requires merchant domain verification and a Stripe payment processor backend.",
+    "status": "Disabled",
+    "traffic_percentage": 0,
+    "last_modified": "2026-03-18",
+    "targeted_segments": ["safari_users", "mobile_ios"],
+    "rollout_strategy": "canary"
+  },
+  "stripe_alternative": {
+    "name": "Stripe as Alternative Payment Processor",
+    "description": "Enables the Stripe payment method option that is currently commented out in PaymentScreen.js. Adds a Stripe checkout backend route to orderController and handles webhooks for async payment confirmation. Acts as a fallback when PayPal is unavailable and provides credit card tokenization independent of PayPal.",
+    "status": "Testing",
+    "traffic_percentage": 5,
+    "last_modified": "2026-04-05",
+    "targeted_segments": ["beta_users"],
+    "rollout_strategy": "canary"
+  },
+  "product_recommendations": {
+    "name": "Product Recommendations Engine",
+    "description": "Displays a 'Customers also bought' section on ProductScreen populated by a collaborative-filtering model trained on co-purchased order items. Falls back to top-rated products (getTopProducts endpoint) when the model has insufficient data. Increases cross-sell revenue and average basket size.",
+    "status": "Testing",
+    "traffic_percentage": 30,
+    "last_modified": "2026-04-12",
+    "targeted_segments": ["all"],
+    "rollout_strategy": "ab_test"
+  },
+  "recently_viewed": {
+    "name": "Recently Viewed Products",
+    "description": "Tracks the last 6 products visited in the current session (localStorage) and renders a 'Recently Viewed' horizontal scroll row at the bottom of HomeScreen and ProductScreen. Purely client-side; no backend changes. Improves navigation and reduces time-to-repurchase for returning visitors.",
+    "status": "Enabled",
+    "traffic_percentage": 100,
+    "last_modified": "2026-02-01",
+    "targeted_segments": ["all"],
+    "rollout_strategy": "full_release"
+  },
+  "infinite_scroll": {
+    "name": "Infinite Scroll on Product Listing",
+    "description": "Replaces the Paginate component on HomeScreen with an infinite-scroll loader. Uses IntersectionObserver to trigger the next page load (existing pageNumber query param on the products API). Eliminates explicit pagination UI while preserving URL-based deep linking via query params.",
+    "status": "Disabled",
+    "traffic_percentage": 0,
+    "last_modified": "2026-03-28",
+    "targeted_segments": ["mobile"],
+    "rollout_strategy": "canary"
+  },
+  "admin_dashboard_v2": {
+    "name": "Redesigned Admin Dashboard",
+    "description": "Replaces the current tabular OrderListScreen and ProductListScreen with a unified admin dashboard featuring KPI cards (revenue, orders today, low-stock alerts), chart widgets, and a consolidated navigation sidebar. Existing admin routes and controllers are unchanged; only the React layer is replaced.",
+    "status": "Disabled",
+    "traffic_percentage": 0,
+    "last_modified": "2026-04-08",
+    "targeted_segments": ["admin"],
+    "rollout_strategy": "canary"
+  },
+  "admin_bulk_actions": {
+    "name": "Bulk Product Actions in Admin",
+    "description": "Adds checkboxes to the admin ProductListScreen and enables batch operations: bulk delete, bulk price adjustment (percentage discount), and bulk category reassignment. Uses a new PATCH /api/products/bulk endpoint. Speeds up catalog management for large inventories.",
+    "status": "Disabled",
+    "traffic_percentage": 0,
+    "last_modified": "2026-03-14",
+    "targeted_segments": ["admin"],
+    "rollout_strategy": "full_release",
+    "dependencies": ["admin_dashboard_v2"]
+  },
+  "admin_advanced_filters": {
+    "name": "Advanced Order and Product Filters in Admin",
+    "description": "Extends admin list screens with multi-criteria filters: order status, date range, payment method, delivery status, price range, stock level. Filters are applied client-side with a debounced API call. Addresses the current limitation where admins can only search by keyword across the full list.",
+    "status": "Testing",
+    "traffic_percentage": 100,
+    "last_modified": "2026-04-15",
+    "targeted_segments": ["admin"],
+    "rollout_strategy": "full_release"
+  },
+  "reviews_moderation": {
+    "name": "Admin Review Moderation Queue",
+    "description": "Adds a moderation step before reviews go live. New reviews submitted via POST /api/products/:id/reviews are stored with status='pending'. Admins see a moderation queue in the dashboard. Approved reviews are surfaced; rejected ones are removed with an optional email notification to the reviewer.",
+    "status": "Disabled",
+    "traffic_percentage": 0,
+    "last_modified": "2026-02-10",
+    "targeted_segments": ["admin"],
+    "rollout_strategy": "full_release"
+  },
+  "photo_reviews": {
+    "name": "Photo Attachments in Reviews",
+    "description": "Allows customers to attach up to 3 photos when submitting a product review. Images are uploaded to the existing /api/upload endpoint and stored as an array of URLs in the reviewSchema. Displayed as a thumbnail gallery below the review text in ProductScreen.",
+    "status": "Disabled",
+    "traffic_percentage": 0,
+    "last_modified": "2026-03-02",
+    "targeted_segments": ["authenticated"],
+    "rollout_strategy": "canary",
+    "dependencies": ["reviews_moderation"]
+  },
+  "verified_purchase_badge": {
+    "name": "Verified Purchase Badge on Reviews",
+    "description": "Adds a 'Verified Purchase' badge to reviews written by users who have a completed, delivered order containing that product. The check is done at render time by cross-referencing the review's user ID against orderModel. Increases review trustworthiness and conversion rate.",
+    "status": "Enabled",
+    "traffic_percentage": 100,
+    "last_modified": "2026-01-20",
+    "targeted_segments": ["all"],
+    "rollout_strategy": "full_release"
+  },
+  "image_lazy_loading": {
+    "name": "Lazy Loading for Product Images",
+    "description": "Applies native browser lazy loading (loading='lazy') and a low-quality image placeholder (LQIP) blur-up technique to all product card images in the Product component and ProductCarousel. Reduces initial page load payload by 60-70% on catalog pages with many images.",
+    "status": "Enabled",
+    "traffic_percentage": 100,
+    "last_modified": "2026-01-05",
+    "targeted_segments": ["all"],
+    "rollout_strategy": "full_release"
+  },
+  "code_splitting_optimisation": {
+    "name": "Route-Level Code Splitting",
+    "description": "Wraps all screen-level React components (CartScreen, AdminScreens, OrderScreen, etc.) with React.lazy + Suspense so each route is loaded as a separate JS chunk. Reduces initial bundle size from ~280 KB to ~90 KB for anonymous users who never visit admin routes.",
+    "status": "Testing",
+    "traffic_percentage": 50,
+    "last_modified": "2026-04-18",
+    "targeted_segments": ["all"],
+    "rollout_strategy": "canary"
+  },
+  "dark_mode": {
+    "name": "Dark Mode Theme",
+    "description": "Adds a theme toggle to the Header component that switches the app between the default light Bootstrap theme and a dark palette. Preference is persisted to localStorage and respected on next visit. Requires overriding Bootstrap CSS custom properties; no backend changes.",
+    "status": "Testing",
+    "traffic_percentage": 20,
+    "last_modified": "2026-04-20",
+    "targeted_segments": ["all"],
+    "rollout_strategy": "ab_test"
+  },
+  "guest_checkout": {
+    "name": "Guest Checkout Without Registration",
+    "description": "Allows unauthenticated users to complete a purchase without creating an account. A temporary guest token is issued at checkout start and associated with the order. Post-purchase, the user is offered account creation pre-filled with their shipping details. Reduces registration friction and recovers otherwise-lost sales.",
+    "status": "Disabled",
+    "traffic_percentage": 0,
+    "last_modified": "2026-03-25",
+    "targeted_segments": ["guests"],
+    "rollout_strategy": "canary"
+  }
+}
