@@ -62,15 +62,31 @@ afterAll(async () => {
 })
 
 describe('POST /api/upload (uploadRoutes)', () => {
-  // ---- TARGET behavior (will intentionally flip after the fix) ----
-  it('CURRENT BEHAVIOR: an unauthenticated client can upload a file', async () => {
+  // ---- TARGET behavior — intentional behavior change, see
+  //      fix-3-public-upload.md ----
+  // Pre-fix an unauthenticated client could upload (200 + /uploads path).
+  // After adding `protect, admin`, an unauthenticated request is rejected with
+  // 401 before multer ever stores a file.
+  it('rejects an unauthenticated upload with 401 (fixed)', async () => {
     const res = await request(app)
       .post('/api/upload')
       .attach('image', PNG_1X1, 'evil.png')
 
-    expect(res.status).toBe(200)
-    expect(res.text).toMatch(/^\/uploads[\\/]/)
-    created.push(res.text)
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects an authenticated NON-admin upload with 401 (fixed)', async () => {
+    const nonAdmin = await User.create({
+      name: 'Regular Joe',
+      email: 'joe@proshop.test',
+      password: 'JoePass123!',
+    })
+    const res = await request(app)
+      .post('/api/upload')
+      .set('Authorization', `Bearer ${tokenFor(nonAdmin._id)}`)
+      .attach('image', PNG_1X1, 'joe.png')
+
+    expect(res.status).toBe(401)
   })
 
   // ---- CONTROL behavior (must stay green after the fix) ----
