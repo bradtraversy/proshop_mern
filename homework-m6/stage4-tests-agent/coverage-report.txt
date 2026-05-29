@@ -1,0 +1,14 @@
+
+ RUN  v2.1.9 /Users/nikita.rybalov/workspace/proshop_mern
+
+ ✓ mcp-server-feature-flags/__tests__/index.test.ts (9 tests) 109ms
+ ✓ mcp-server-search-docs/__tests__/index.test.ts (7 tests) 133ms
+ ✓ homework-m6/stage2-fix-top3/tests/upload-public-access.test.js (4 tests) 384ms
+ ✓ homework-m6/stage2-fix-top3/tests/getOrderById-idor.test.js (5 tests) 913ms
+ ✓ homework-m6/stage2-fix-top3/tests/getUsers-password-exposure.test.js (5 tests) 907ms
+
+ Test Files  5 passed (5)
+      Tests  30 passed (30)
+   Start at  19:30:29
+   Duration  8.11s (transform 100ms, setup 0ms, collect 5.08s, tests 2.45s, environment 0ms, prepare 162ms)
+

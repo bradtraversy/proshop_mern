@@ -7,6 +7,8 @@ export default defineConfig({
     include: [
       'homework-m6/stage2-fix-top3/tests/**/*.test.js',
       'homework-m6/stage4-tests-agent/**/*.test.{js,ts}',
+      'mcp-server-feature-flags/__tests__/**/*.test.{js,ts}',
+      'mcp-server-search-docs/__tests__/**/*.test.{js,ts}',
     ],
     environment: 'node',
     testTimeout: 30000,

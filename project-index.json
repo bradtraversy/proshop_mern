@@ -274,7 +274,19 @@
       "stage3-living-docs",
       "stage4-tests-agent"
     ],
-    "homework-m6/stage4-tests-agent": [],
+    "homework-m6/stage4-tests-agent": [
+      "README.md",
+      "coverage-report.txt",
+      "service-1-tests",
+      "service-2-tests",
+      "test-writer-mate.md"
+    ],
+    "homework-m6/stage4-tests-agent/service-1-tests": [
+      "feature-flags.index.test.ts"
+    ],
+    "homework-m6/stage4-tests-agent/service-2-tests": [
+      "search-docs.index.test.ts"
+    ],
     "homework-m6/stage2-fix-top3": [
       "fix-1-getusers-password-exposure.md",
       "fix-2-getorderbyid-idor.md",
@@ -293,9 +305,141 @@
     ],
     "homework-m6/stage3-living-docs": [
       "00-plan.md",
+      "CLAUDE.md",
+      "docs-archived",
       "docs-audit.md",
+      "docs-new",
       "hook-verification.txt",
-      "stage3-synthesis.md"
+      "project-index.json",
+      "stage3-synthesis.md",
+      "update_project_index.py"
+    ],
+    "homework-m6/stage3-living-docs/docs-archived": [
+      "DESIGN_SYSTEM.md",
+      "adrs",
+      "design-system-pack-example",
+      "incidents",
+      "project-data",
+      "report.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-archived/project-data": [
+      "dev-history.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-archived/design-system-pack-example": [
+      "README.md",
+      "design-system.css",
+      "design-system.json",
+      "design-system.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-archived/adrs": [
+      "adr-003-jwt-vs-session.md",
+      "adr-005-bootstrap-vs-tailwind.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-archived/incidents": [
+      "i-001-paypal-double-charge.md",
+      "i-002-mongo-connection-pool-exhaustion.md",
+      "i-003-jwt-secret-leak.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-new": [
+      "README.md",
+      "adr",
+      "api",
+      "architecture",
+      "architecture.md",
+      "design",
+      "features",
+      "guides",
+      "pages",
+      "project-data",
+      "runbooks",
+      "specs"
+    ],
+    "homework-m6/stage3-living-docs/docs-new/design": [
+      "DESIGN.md",
+      "anti-slop-supplement.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-new/adr": [
+      "0001-stateless-jwt-auth-with-localstorage.md",
+      "0002-client-trusted-paypal-payment-verification.md",
+      "0003-no-database-migration-tooling.md",
+      "0004-tailwind-v4-design-system-migration.md",
+      "adr-001-mongodb-vs-postgres.md",
+      "adr-002-redux-vs-context.md",
+      "adr-004-paypal-vs-stripe.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-new/specs": [
+      "feature-flags-mcp-spec.md",
+      "featureFlagController-spec.md",
+      "orderController-spec.md",
+      "search-docs-rag-mcp-spec.md",
+      "userController-spec.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-new/features": [
+      "admin.md",
+      "auth.md",
+      "cart.md",
+      "catalog.md",
+      "checkout.md",
+      "payments.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-new/runbooks": [
+      "ab-test-setup.md",
+      "db-seed-and-reset.md",
+      "deploy.md",
+      "feature-flag-toggle.md",
+      "incident-response.md",
+      "local-setup.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-new/project-data": [
+      "architecture.md",
+      "best-practices.md",
+      "chunks.jsonl",
+      "feature-flags-spec.md",
+      "features-analysis-ru.md",
+      "features.json",
+      "glossary.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-new/architecture": [
+      "README.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-new/guides": [
+      "chunking-strategies-guide-en.md",
+      "chunking-strategies-guide.md",
+      "embedding-models-2026-guide-en.md",
+      "embedding-models-2026-guide.md",
+      "grep-lsp-agents-md-guide-en.md",
+      "grep-lsp-agents-md-guide.md",
+      "mcp-design-principles-en.md",
+      "mcp-design-principles.md",
+      "mcp-vs-cli-vs-skills-decision-framework-en.md",
+      "mcp-vs-cli-vs-skills-decision-framework.md",
+      "vector-db-comparison-2026-en.md",
+      "vector-db-comparison-2026.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-new/api": [
+      "auth.md",
+      "orders.md",
+      "products.md",
+      "uploads.md",
+      "users.md"
+    ],
+    "homework-m6/stage3-living-docs/docs-new/pages": [
+      "INDEX.md",
+      "admin-orders.md",
+      "admin-product-edit.md",
+      "admin-products.md",
+      "admin-user-edit.md",
+      "admin-users.md",
+      "cart.md",
+      "home.md",
+      "login.md",
+      "order.md",
+      "payment.md",
+      "place-order.md",
+      "product.md",
+      "profile.md",
+      "register.md",
+      "shipping.md"
     ],
     "homework-m6/stage1-code-review": [
       "architecture-findings.jsonl",
@@ -493,20 +637,28 @@
     ],
     "mcp-server-search-docs": [
       "Dockerfile",
+      "__tests__",
       "package-lock.json",
       "package.json",
       "src",
       "tsconfig.json"
+    ],
+    "mcp-server-search-docs/__tests__": [
+      "index.test.ts"
     ],
     "mcp-server-search-docs/src": [
       "index.ts"
     ],
     "mcp-server-feature-flags": [
       "Dockerfile",
+      "__tests__",
       "package-lock.json",
       "package.json",
       "src",
       "tsconfig.json"
+    ],
+    "mcp-server-feature-flags/__tests__": [
+      "index.test.ts"
     ],
     "mcp-server-feature-flags/src": [
       "index.ts"
@@ -538,5 +690,5 @@
       "i-003-jwt-secret-leak.md"
     ]
   },
-  "last_updated": "2026-05-29T16:24:17.264022+00:00"
+  "last_updated": "2026-05-29T16:31:13.061936+00:00"
 }
