@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "proshop-feature-flags": {
+      "command": "node",
+      "args": ["mcp-server-feature-flags/dist/index.js"]
+    },
+    "proshop-search-docs": {
+      "command": "node",
+      "args": ["mcp-server-search-docs/dist/index.js"]
+    }
+  }
+}

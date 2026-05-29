@@ -1,0 +1,527 @@
+{
+  "metadata": {
+    "name": "Minimal Tech Design System",
+    "description": "A dark-first, functional design system for SaaS tools and developer dashboards. Inspired by Linear, Vercel, and Stripe Atlas. Built for AI agent consumption.",
+    "version": "1.0.0",
+    "philosophy": "Technical clarity over visual flair. Every design decision serves legibility and function.",
+    "export_format": "JSON + CSS + Markdown bundle",
+    "source_pattern": "ZIP export pattern (JSON + CSS + Markdown bundle for AI agents)",
+    "shadcn_compatible": true,
+    "tailwind_version": "4"
+  },
+
+  "design_philosophy": "This system is built on the principle that great technical interfaces earn trust through restraint. Generous whitespace signals confidence — a UI that doesn't fight for your attention lets the data speak. Depth is created through background layering (three levels: page, card, card-alt), never through box shadows. Every interactive element communicates its state explicitly: hover, focus, loading, and empty are not afterthoughts — they are first-class design decisions. Typography is set in Manrope rather than Inter to avoid the ubiquitous 'AI-generated look'. Spacing follows an 8px grid with no exceptions. Colors are semantic tokens, not raw hex values — changing one root variable propagates through the entire interface. This is a system for builders who want their tools to look like tools, not like marketing.",
+
+  "design_principles": [
+    "Restraint over decoration — if a visual element doesn't serve function, remove it",
+    "Depth from contrast, not shadows — three background levels create all the elevation you need",
+    "Spacing is design — generous padding communicates quality; cramped layouts communicate rush",
+    "Semantic tokens only — never hardcode color hex values in components",
+    "States are non-negotiable — every interactive element must have hover, focus, loading, and empty states",
+    "Typography hierarchy through weight and size, not color",
+    "8px grid — all spacing values are multiples of 8"
+  ],
+
+  "ux_principles": [
+    "Show system status — always communicate what is happening (loading states, progress, errors)",
+    "Error prevention over error messages — guide the user before mistakes happen",
+    "Recognition over recall — label controls, avoid icon-only interfaces without tooltips",
+    "Consistency breeds confidence — identical patterns in identical contexts",
+    "Empty states are onboarding moments — design them intentionally, not as placeholders"
+  ],
+
+  "aesthetics": "Dark slate foundation with cool blue-gray midtones. Single indigo accent (#6366f1) for all primary interactions. Muted text hierarchy: primary text at 90% opacity white, secondary at 60%. No gradients. No decorative illustrations. Code-friendly mono font for data values. The aesthetic is inspired by internal tools at companies that care about developer experience — Linear's density, Vercel's precision, Raycast's refinement.",
+
+  "color_system": {
+    "background": {
+      "page": "#0f172a",
+      "page_css_var": "--color-bg",
+      "description": "Root page background — darkest level"
+    },
+    "card": {
+      "default": "#1e293b",
+      "alt": "#263347",
+      "card_css_var": "--color-card",
+      "card_alt_css_var": "--color-card-alt",
+      "description": "Three-level elevation: page (#0f172a) → card (#1e293b) → card-alt (#263347)"
+    },
+    "foreground": {
+      "primary": "#f1f5f9",
+      "secondary": "#94a3b8",
+      "muted": "#64748b",
+      "primary_css_var": "--color-fg",
+      "secondary_css_var": "--color-fg-secondary",
+      "muted_css_var": "--color-fg-muted"
+    },
+    "primary": {
+      "base": "#6366f1",
+      "hover": "#4f46e5",
+      "foreground": "#ffffff",
+      "css_var": "--color-primary",
+      "hover_css_var": "--color-primary-hover",
+      "description": "Indigo — single accent color for all primary interactive elements"
+    },
+    "muted": {
+      "background": "#1e293b",
+      "foreground": "#64748b",
+      "bg_css_var": "--color-muted",
+      "fg_css_var": "--color-muted-fg"
+    },
+    "accent": {
+      "background": "#312e81",
+      "foreground": "#a5b4fc",
+      "bg_css_var": "--color-accent",
+      "fg_css_var": "--color-accent-fg"
+    },
+    "destructive": {
+      "base": "#ef4444",
+      "foreground": "#ffffff",
+      "subtle": "#7f1d1d",
+      "css_var": "--color-destructive",
+      "description": "Red for errors, delete actions, critical warnings"
+    },
+    "success": {
+      "base": "#10b981",
+      "foreground": "#ffffff",
+      "subtle": "#064e3b",
+      "css_var": "--color-success"
+    },
+    "warning": {
+      "base": "#f59e0b",
+      "foreground": "#000000",
+      "subtle": "#451a03",
+      "css_var": "--color-warning"
+    },
+    "border": {
+      "default": "#334155",
+      "subtle": "#1e293b",
+      "css_var": "--color-border",
+      "description": "Subtle borders — 1px, never heavy"
+    },
+    "ring": {
+      "default": "#6366f1",
+      "css_var": "--color-ring",
+      "description": "Focus ring color — matches primary"
+    },
+    "dark_mode": {
+      "note": "This system is dark-first. Light mode inverts the elevation hierarchy.",
+      "bg_light": "#f8fafc",
+      "card_light": "#ffffff",
+      "card_alt_light": "#f1f5f9",
+      "fg_light": "#0f172a",
+      "fg_secondary_light": "#475569",
+      "border_light": "#e2e8f0"
+    }
+  },
+
+  "spacing_system": {
+    "base_unit": 8,
+    "scale": [8, 16, 24, 32, 48, 64, 96, 128],
+    "tokens": {
+      "space-1": "8px",
+      "space-2": "16px",
+      "space-3": "24px",
+      "space-4": "32px",
+      "space-6": "48px",
+      "space-8": "64px",
+      "space-12": "96px",
+      "space-16": "128px"
+    },
+    "component_padding": {
+      "card": "24px",
+      "card_compact": "16px",
+      "button_x": "16px",
+      "button_y": "8px",
+      "input_x": "12px",
+      "input_y": "8px",
+      "section": "48px",
+      "page": "32px"
+    },
+    "note": "No half-values. No 12px. No 20px. If you need it — round to the nearest multiple of 8."
+  },
+
+  "typography": {
+    "font_family": {
+      "primary": "Manrope, system-ui, sans-serif",
+      "mono": "JetBrains Mono, Fira Code, monospace",
+      "note": "Not Inter. Manrope avoids the ubiquitous AI-generated UI look."
+    },
+    "scale": {
+      "display": {
+        "size": "64px",
+        "weight": 800,
+        "line_height": "1.1",
+        "tracking": "-0.03em",
+        "usage": "Hero headlines only"
+      },
+      "h1": {
+        "size": "48px",
+        "weight": 700,
+        "line_height": "1.15",
+        "tracking": "-0.02em",
+        "usage": "Page titles"
+      },
+      "h2": {
+        "size": "32px",
+        "weight": 700,
+        "line_height": "1.2",
+        "tracking": "-0.015em",
+        "usage": "Section headers"
+      },
+      "h3": {
+        "size": "24px",
+        "weight": 600,
+        "line_height": "1.3",
+        "tracking": "-0.01em",
+        "usage": "Card titles, subsection headers"
+      },
+      "h4": {
+        "size": "20px",
+        "weight": 600,
+        "line_height": "1.4",
+        "tracking": "-0.005em",
+        "usage": "Small section headers"
+      },
+      "body": {
+        "size": "16px",
+        "weight": 400,
+        "line_height": "1.6",
+        "tracking": "0em",
+        "usage": "Body text, descriptions"
+      },
+      "body_sm": {
+        "size": "14px",
+        "weight": 400,
+        "line_height": "1.5",
+        "tracking": "0em",
+        "usage": "Secondary text, metadata"
+      },
+      "caption": {
+        "size": "12px",
+        "weight": 500,
+        "line_height": "1.4",
+        "tracking": "0.01em",
+        "usage": "Labels, badges, timestamps"
+      },
+      "code": {
+        "font": "JetBrains Mono, Fira Code, monospace",
+        "size": "13px",
+        "weight": 400,
+        "line_height": "1.6",
+        "usage": "Code blocks, terminal output, data values"
+      }
+    }
+  },
+
+  "border_radius": {
+    "none": "0px",
+    "sm": "4px",
+    "md": "8px",
+    "lg": "12px",
+    "xl": "16px",
+    "full": "9999px",
+    "usage": {
+      "buttons": "8px (md)",
+      "cards": "12px (lg)",
+      "inputs": "8px (md)",
+      "badges": "4px (sm) or 9999px (full) for pill badges",
+      "modals": "12px (lg)",
+      "tooltips": "6px"
+    }
+  },
+
+  "transitions": {
+    "fast": "150ms ease",
+    "base": "200ms ease",
+    "slow": "300ms ease",
+    "spring": "200ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+    "usage": {
+      "hover_color": "fast (150ms)",
+      "hover_transform": "base (200ms)",
+      "modal_open": "slow (300ms)",
+      "skeleton_pulse": "1.5s ease-in-out infinite"
+    }
+  },
+
+  "states": {
+    "hover": {
+      "buttons": "background shift to primary-hover, scale(1.01)",
+      "cards": "border-color shifts to --color-border (from transparent)",
+      "links": "color shifts to --color-primary",
+      "list_items": "background: --color-muted",
+      "note": "All hovers use 150ms ease transition"
+    },
+    "focus": {
+      "outline": "2px solid var(--color-ring)",
+      "outline_offset": "2px",
+      "note": "Always visible. Never remove focus outlines — accessibility requirement."
+    },
+    "active": {
+      "buttons": "scale(0.98)",
+      "note": "Subtle press feedback"
+    },
+    "loading": {
+      "skeleton": "animated gradient pulse from --color-muted to --color-card-alt",
+      "spinner": "border-top: 2px solid var(--color-primary), border: 2px solid var(--color-border), border-radius: 50%, animation: spin 0.8s linear infinite",
+      "button_loading": "opacity: 0.7, cursor: not-allowed, spinner icon replaces label"
+    },
+    "empty": {
+      "icon": "48px, color: --color-fg-muted",
+      "title": "h4 weight, color: --color-fg-secondary",
+      "description": "body-sm, color: --color-fg-muted",
+      "action": "optional CTA button, secondary variant",
+      "note": "Empty states are onboarding moments. Always include a helpful action."
+    },
+    "disabled": {
+      "opacity": "0.5",
+      "cursor": "not-allowed",
+      "pointer_events": "none"
+    }
+  },
+
+  "components": {
+    "buttons": {
+      "variants": {
+        "primary": {
+          "background": "var(--color-primary)",
+          "color": "#ffffff",
+          "hover_background": "var(--color-primary-hover)",
+          "hover_transform": "scale(1.01)"
+        },
+        "secondary": {
+          "background": "transparent",
+          "color": "var(--color-fg)",
+          "border": "1px solid var(--color-border)",
+          "hover_background": "var(--color-muted)"
+        },
+        "ghost": {
+          "background": "transparent",
+          "color": "var(--color-fg-secondary)",
+          "hover_background": "var(--color-muted)",
+          "hover_color": "var(--color-fg)"
+        },
+        "destructive": {
+          "background": "var(--color-destructive)",
+          "color": "#ffffff",
+          "hover_background": "#dc2626"
+        }
+      },
+      "sizes": {
+        "sm": "height: 32px, padding: 0 12px, font-size: 13px",
+        "md": "height: 40px, padding: 0 16px, font-size: 14px",
+        "lg": "height: 48px, padding: 0 24px, font-size: 16px"
+      },
+      "properties": {
+        "border_radius": "8px",
+        "font_weight": 500,
+        "transition": "all 150ms ease",
+        "focus_ring": "2px solid var(--color-ring)",
+        "focus_ring_offset": "2px"
+      }
+    },
+    "cards": {
+      "default": {
+        "background": "var(--color-card)",
+        "border": "1px solid var(--color-border)",
+        "border_radius": "12px",
+        "padding": "24px"
+      },
+      "compact": {
+        "padding": "16px",
+        "border_radius": "8px"
+      },
+      "interactive": {
+        "hover_border_color": "var(--color-primary)",
+        "hover_transform": "none",
+        "transition": "border-color 150ms ease"
+      },
+      "note": "No box-shadow. Elevation through background contrast only."
+    },
+    "inputs": {
+      "default": {
+        "background": "var(--color-card)",
+        "border": "1px solid var(--color-border)",
+        "border_radius": "8px",
+        "padding": "8px 12px",
+        "color": "var(--color-fg)",
+        "font_size": "14px",
+        "placeholder_color": "var(--color-fg-muted)"
+      },
+      "focus": {
+        "border_color": "var(--color-primary)",
+        "outline": "none",
+        "ring": "0 0 0 2px rgba(99, 102, 241, 0.2)"
+      },
+      "error": {
+        "border_color": "var(--color-destructive)"
+      },
+      "sizes": {
+        "sm": "height: 32px",
+        "md": "height: 40px",
+        "lg": "height: 48px"
+      }
+    },
+    "badges": {
+      "variants": {
+        "default": {
+          "background": "var(--color-muted)",
+          "color": "var(--color-fg-secondary)"
+        },
+        "primary": {
+          "background": "var(--color-accent)",
+          "color": "var(--color-accent-fg)"
+        },
+        "success": {
+          "background": "var(--color-success)",
+          "color": "#ffffff"
+        },
+        "warning": {
+          "background": "var(--color-warning)",
+          "color": "#000000"
+        },
+        "destructive": {
+          "background": "var(--color-destructive)",
+          "color": "#ffffff"
+        }
+      },
+      "properties": {
+        "border_radius": "4px (default) or 9999px (pill)",
+        "padding": "2px 8px",
+        "font_size": "12px",
+        "font_weight": 500
+      }
+    }
+  },
+
+  "interactive_components": {
+    "modals": {
+      "overlay": {
+        "background": "rgba(0, 0, 0, 0.6)",
+        "backdrop_filter": "blur(4px)"
+      },
+      "dialog": {
+        "background": "var(--color-card)",
+        "border": "1px solid var(--color-border)",
+        "border_radius": "12px",
+        "padding": "24px",
+        "max_width": "540px",
+        "width": "90vw"
+      },
+      "header": {
+        "margin_bottom": "16px",
+        "title_size": "h3"
+      },
+      "footer": {
+        "margin_top": "24px",
+        "gap": "8px",
+        "justify": "flex-end"
+      },
+      "animation": {
+        "open": "fade in + scale from 0.96 to 1, 200ms ease",
+        "close": "fade out + scale from 1 to 0.96, 150ms ease"
+      }
+    },
+    "tabs": {
+      "container": {
+        "border_bottom": "1px solid var(--color-border)"
+      },
+      "tab": {
+        "padding": "8px 16px",
+        "font_size": "14px",
+        "font_weight": 500,
+        "color": "var(--color-fg-muted)",
+        "border_bottom": "2px solid transparent",
+        "transition": "all 150ms ease"
+      },
+      "tab_active": {
+        "color": "var(--color-fg)",
+        "border_bottom_color": "var(--color-primary)"
+      },
+      "tab_hover": {
+        "color": "var(--color-fg-secondary)"
+      }
+    },
+    "dropdowns": {
+      "trigger": {
+        "same_as": "button secondary variant"
+      },
+      "menu": {
+        "background": "var(--color-card)",
+        "border": "1px solid var(--color-border)",
+        "border_radius": "8px",
+        "padding": "4px",
+        "min_width": "160px",
+        "box_shadow": "none",
+        "animation": "fade in + translate-y -4px → 0, 150ms ease"
+      },
+      "item": {
+        "padding": "8px 12px",
+        "border_radius": "6px",
+        "font_size": "14px",
+        "color": "var(--color-fg-secondary)",
+        "cursor": "pointer"
+      },
+      "item_hover": {
+        "background": "var(--color-muted)",
+        "color": "var(--color-fg)"
+      },
+      "separator": {
+        "height": "1px",
+        "background": "var(--color-border)",
+        "margin": "4px 0"
+      }
+    },
+    "tooltips": {
+      "background": "var(--color-fg)",
+      "color": "var(--color-bg)",
+      "border_radius": "6px",
+      "padding": "6px 10px",
+      "font_size": "12px",
+      "font_weight": 500,
+      "animation": "fade in, 150ms ease",
+      "max_width": "240px",
+      "note": "Dark tooltip on dark backgrounds — inverted from the card color."
+    },
+    "selects": {
+      "same_as_input": true,
+      "additional": {
+        "chevron_icon": "16px, color: var(--color-fg-muted)",
+        "option_hover": "background: var(--color-muted)"
+      }
+    }
+  },
+
+  "animations": {
+    "skeleton_pulse": {
+      "keyframe": "from background-position 200% to -200%",
+      "gradient": "linear-gradient(90deg, var(--color-muted) 25%, var(--color-card-alt) 50%, var(--color-muted) 75%)",
+      "duration": "1.5s",
+      "timing": "ease-in-out",
+      "iteration": "infinite"
+    },
+    "spin": {
+      "keyframe": "from: rotate(0deg), to: rotate(360deg)",
+      "duration": "0.8s",
+      "timing": "linear",
+      "iteration": "infinite"
+    },
+    "fade_in": {
+      "keyframe": "from opacity 0 to 1",
+      "duration": "200ms",
+      "timing": "ease"
+    },
+    "slide_up": {
+      "keyframe": "from translateY(8px) opacity 0 to translateY(0) opacity 1",
+      "duration": "200ms",
+      "timing": "ease"
+    },
+    "scale_in": {
+      "keyframe": "from scale(0.96) opacity 0 to scale(1) opacity 1",
+      "duration": "200ms",
+      "timing": "ease"
+    },
+    "reduced_motion": {
+      "note": "All animations must be disabled or reduced under prefers-reduced-motion: reduce"
+    }
+  }
+}

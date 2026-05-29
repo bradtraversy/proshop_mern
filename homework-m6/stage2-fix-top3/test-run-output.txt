@@ -1,0 +1,12 @@
+
+ RUN  v2.1.9 /Users/nikita.rybalov/workspace/proshop_mern
+
+ ✓ homework-m6/stage2-fix-top3/tests/upload-public-access.test.js (4 tests) 379ms
+ ✓ homework-m6/stage2-fix-top3/tests/getOrderById-idor.test.js (5 tests) 918ms
+ ✓ homework-m6/stage2-fix-top3/tests/getUsers-password-exposure.test.js (5 tests) 904ms
+
+ Test Files  3 passed (3)
+      Tests  14 passed (14)
+   Start at  19:04:49
+   Duration  3.88s (transform 35ms, setup 0ms, collect 1.29s, tests 2.20s, environment 0ms, prepare 119ms)
+

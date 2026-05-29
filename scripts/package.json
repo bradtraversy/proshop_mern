@@ -1,0 +1,18 @@
+{
+    "name": "proshop-scripts",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "description": "Chunking, embedding, and search scripts for ProShop RAG pipeline",
+    "scripts": {
+        "chunk": "node chunk_markdown.js",
+        "embed": "node embed_chunks.js",
+        "search": "node search_chunks.js"
+    },
+    "dependencies": {
+        "dotenv": "^16.4.0",
+        "openai": "^4.70.0",
+        "pg": "^8.13.0",
+        "pgvector": "^0.2.0"
+    }
+}

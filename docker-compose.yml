@@ -1,0 +1,72 @@
+services:
+  mongo:
+    image: mongo:6
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - '27017:27017'
+
+  backend:
+    build: .
+    restart: unless-stopped
+    ports:
+      - '5001:5000'
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/proshop
+    depends_on:
+      - mongo
+    volumes:
+      - uploads:/app/uploads
+      - ./backend/features.json:/app/backend/features.json
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      - VITE_API_URL=http://backend:5000
+    depends_on:
+      - backend
+
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-proshop}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-proshop}
+      - POSTGRES_DB=${POSTGRES_DB:-proshop}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+  mcp-feature-flags:
+    build:
+      context: .
+      dockerfile: mcp-server-feature-flags/Dockerfile
+    restart: 'no'
+    volumes:
+      - ./backend/features.json:/app/backend/features.json
+    profiles:
+      - mcp
+
+  mcp-search-docs:
+    build:
+      context: .
+      dockerfile: mcp-server-search-docs/Dockerfile
+    restart: 'no'
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    profiles:
+      - mcp
+
+volumes:
+  mongo_data:
+  postgres_data:
+  uploads:

@@ -1,127 +1,394 @@
-# ProShop eCommerce Platform
+# ProShop MERN
 
-> eCommerce platform built with the MERN stack & Redux.
+E-commerce platform for browsing products, managing a shopping cart, and placing orders with PayPal checkout. Includes an admin panel for product, user, and order management. Built as a monorepo: an Express REST API backed by MongoDB on the server side, and a React/Redux single-page application on the client side. Originally created by Brad Traversy as a Udemy course project.
 
-### THIS PROJECT IS DEPRECATED
-This project is no longer supported. The new project/course has been released. The code has been cleaned up and now uses Redux Toolkit. You can find the new version [HERE](https://github.com/bradtraversy/proshop-v2)
+> **Note:** The upstream repository is archived. The author recommends [proshop-v2](https://github.com/bradtraversy/proshop-v2) (Redux Toolkit). This fork is maintained independently.
 
 ![screenshot](https://github.com/bradtraversy/proshop_mern/blob/master/uploads/Screen%20Shot%202020-09-29%20at%205.50.52%20PM.png)
 
-## Features
+## Tech Stack
 
-- Full featured shopping cart
-- Product reviews and ratings
-- Top products carousel
-- Product pagination
-- Product search feature
-- User profile with orders
-- Admin product management
-- Admin user management
-- Admin Order details page
-- Mark orders as delivered option
-- Checkout process (shipping, payment method, etc)
-- PayPal / credit card integration
-- Database seeder (products & users)
+| Layer       | Package                  | Version         |
+|-------------|--------------------------|-----------------|
+| Runtime     | Node.js (ES Modules)     | ≥14.6           |
+| Backend     | Express                  | ^4.17.1         |
+| Database    | Mongoose (MongoDB)       | ^5.10.6         |
+| Auth        | jsonwebtoken / bcryptjs  | ^8.5.1 / ^2.4.3 |
+| File upload | Multer                   | ^1.4.2          |
+| Frontend    | React (Create React App) | ^16.13.1        |
+| State       | Redux + Redux Thunk      | ^4.0.5 / ^2.3.0 |
+| UI          | React-Bootstrap          | ^1.3.0          |
+| Routing     | react-router-dom         | ^5.2.0          |
+| HTTP client | Axios                    | ^0.20.0         |
+| Dev tools   | concurrently, nodemon    | ^5.3.0 / ^2.0.4 |
 
-## Note on Issues
-Please do not post issues here that are related to your own code when taking the course. Add those in the Udemy Q/A. If you clone THIS repo and there are issues, then you can submit
-
-## Usage
-
-### ES Modules in Node
-
-We use ECMAScript Modules in the backend in this project. Be sure to have at least Node v14.6+ or you will need to add the "--experimental-modules" flag.
-
-Also, when importing a file (not a package), be sure to add .js at the end or you will get a "module not found" error
-
-You can also install and setup Babel if you would like
-
-### Env Variables
-
-Create a .env file in then root and add the following
+## Folder Structure
 
 ```
-NODE_ENV = development
-PORT = 5000
-MONGO_URI = your mongodb uri
-JWT_SECRET = 'abc123'
-PAYPAL_CLIENT_ID = your paypal client id
+proshop_mern/
+├── backend/
+│   ├── config/db.js            # Mongoose connection (MONGO_URI)
+│   ├── controllers/            # Route handlers: product, user, order, featureFlag
+│   ├── data/                   # Seed data: users.js, products.js
+│   ├── features.json           # Feature flag database (read/write at runtime)
+│   ├── middleware/
+│   │   ├── authMiddleware.js   # JWT verify (protect) + admin guard
+│   │   └── errorMiddleware.js  # 404 handler + global error handler
+│   ├── models/                 # Mongoose schemas: User, Product, Order
+│   ├── routes/                 # Express routers: product, user, order, upload, featureFlag
+│   ├── utils/generateToken.js  # JWT sign helper (30-day expiry)
+│   ├── seeder.js               # Import / destroy sample data
+│   └── server.js               # Express entry point
+├── frontend/
+│   ├── Dockerfile              # CRA dev server container
+│   └── src/
+│       ├── actions/            # Redux Thunk action creators (4 files)
+│       ├── constants/          # Action type strings (4 files)
+│       ├── reducers/           # Redux reducers (4 files)
+│       ├── components/         # Reusable UI: Header, Footer, Loader, Rating, etc.
+│       ├── screens/            # Page components (16 screens)
+│       ├── store.js            # Redux store with localStorage hydration
+│       ├── App.js              # React Router layout
+│       └── index.js            # React entry point
+├── mcp-server-feature-flags/    # MCP server for feature flag management (4 tools)
+│   ├── Dockerfile              # Container (docker compose --profile mcp)
+│   ├── src/index.ts            # Server: list, get, set, adjust feature flags
+│   ├── package.json            # Dependencies (@modelcontextprotocol/sdk, zod)
+│   └── tsconfig.json           # TypeScript configuration
+├── mcp-server-search-docs/     # MCP server for documentation search (1 tool)
+│   ├── Dockerfile              # Container (docker compose --profile mcp)
+│   ├── src/index.ts            # Server: search_project_docs (pgvector + OpenAI)
+│   ├── package.json            # Dependencies (openai, pg, dotenv, zod)
+│   └── tsconfig.json           # TypeScript configuration
+├── scripts/                    # RAG pipeline scripts (Node.js, ES Modules)
+│   ├── chunk_markdown.js       # Semantic markdown chunker → chunks.jsonl
+│   ├── embed_chunks.js         # OpenAI embedding + pgvector ingestion
+│   ├── search_chunks.js        # Semantic search CLI with pre-filters
+│   └── package.json            # Scripts dependencies (openai, pg, pgvector, dotenv)
+├── docs/project-data/          # Project documentation corpus
+│   └── chunks.jsonl            # 723 semantic chunks (generated by chunk_markdown.js)
+├── .copilot/mcp.json           # MCP client config (both servers) for GitHub Copilot CLI
+├── Dockerfile                  # Backend production image
+├── docker-compose.yml          # Full stack: backend, frontend, mongo, postgres, mcp
+├── .dockerignore               # Docker build exclusions
+├── uploads/                    # User-uploaded product images (served at /uploads)
+├── package.json                # Root: backend deps + monorepo scripts
+├── Procfile                    # Heroku: web: node backend/server.js
+└── .env                        # Environment variables (not committed)
 ```
 
-### Install Dependencies (frontend & backend)
+## Prerequisites
 
+- **Node.js** ≥ 14.6 (ES Modules support required; tested with Node 16/18)
+- **MongoDB** — any one of:
+  - [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) free tier (M0) — no local installation needed
+  - Local `mongod` (Community Server 4.4+)
+  - Docker: `docker run -d -p 27017:27017 --name mongo mongo:6`
+
+## Environment Variables
+
+Create a `.env` file in the **project root** (not inside `backend/`). Every variable below is read by the code at runtime:
+
+```env
+NODE_ENV=development
+PORT=5000
+MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/proshop?retryWrites=true&w=majority
+JWT_SECRET=<any-random-string>
+PAYPAL_CLIENT_ID=<your-paypal-sandbox-client-id>
+OPENAI_API_KEY=<your-openai-api-key>
+POSTGRES_USER=proshop
+POSTGRES_PASSWORD=proshop
+POSTGRES_DB=proshop
 ```
+
+| Variable            | Where used                                            | Notes                                                                |
+|---------------------|-------------------------------------------------------|----------------------------------------------------------------------|
+| `NODE_ENV`          | `server.js`, `errorMiddleware.js`                     | `development` enables morgan logger and error stacks                 |
+| `PORT`              | `server.js`                                           | **Must be `5000`** — frontend proxy targets the backend on this port |
+| `MONGO_URI`         | `config/db.js`                                        | Full connection string including database name                       |
+| `JWT_SECRET`        | `generateToken.js`, `authMiddleware.js`               | Used to sign and verify JWT tokens                                   |
+| `PAYPAL_CLIENT_ID`  | `server.js` (`/api/config/paypal`)                    | Served to frontend for PayPal SDK initialization                     |
+| `OPENAI_API_KEY`    | `scripts/embed_chunks.js`, `scripts/search_chunks.js` | Required for embedding generation and semantic search                |
+| `POSTGRES_USER`     | `docker-compose.yml`, `scripts/`                      | PostgreSQL user (default: `proshop`)                                 |
+| `POSTGRES_PASSWORD` | `docker-compose.yml`, `scripts/`                      | PostgreSQL password (default: `proshop`)                             |
+| `POSTGRES_DB`       | `docker-compose.yml`, `scripts/`                      | PostgreSQL database name (default: `proshop`)                        |
+
+## Installation & Startup
+
+```bash
+# 1. Clone and enter the project
+git clone <repo-url> && cd proshop_mern
+
+# 2. Install backend dependencies (root package.json)
 npm install
-cd frontend
-npm install
-```
 
-### Run
+# 3. Install frontend dependencies
+npm install --prefix frontend
 
-```
-# Run frontend (:3000) & backend (:5000)
-npm run dev
+# 4. Create .env (see table above)
+cp .env.example .env   # or create manually
 
-# Run backend only
-npm run server
-```
-
-## Build & Deploy
-
-```
-# Create frontend prod build
-cd frontend
-npm run build
-```
-
-There is a Heroku postbuild script, so if you push to Heroku, no need to build manually for deployment to Heroku
-
-### Seed Database
-
-You can use the following commands to seed the database with some sample users and products as well as destroy all data
-
-```
-# Import data
+# 5. (Optional) Seed the database with sample data
 npm run data:import
 
-# Destroy data
-npm run data:destroy
+# 6. Start both servers in dev mode
+npm run dev
 ```
 
+After `npm run dev`:
+- **Backend API** → `http://localhost:5000` (Express + nodemon)
+- **Frontend** → `http://localhost:3000` (CRA dev server, proxied to backend)
+
+### Other Commands
+
+| Command                           | What it does                                    |
+|-----------------------------------|-------------------------------------------------|
+| `npm run server`                  | Backend only (nodemon, watches for changes)     |
+| `npm run client`                  | Frontend only (CRA dev server)                  |
+| `npm run data:import`             | Wipes DB, inserts sample users + products       |
+| `npm run data:destroy`            | Wipes all collections (users, products, orders) |
+| `npm run build --prefix frontend` | Production build of the frontend                |
+
+### Sample Logins (after seeding)
+
+| Email               | Password | Role     |
+|---------------------|----------|----------|
+| `admin@example.com` | `123456` | Admin    |
+| `john@example.com`  | `123456` | Customer |
+| `jane@example.com`  | `123456` | Customer |
+
+## Troubleshooting
+
+### Backend won't start / `ECONNREFUSED`
+- Check that `MONGO_URI` in `.env` is correct and the database is reachable.
+- For Atlas: whitelist your IP in Network Access (or use `0.0.0.0/0` for dev).
+- For local MongoDB: make sure `mongod` is running (`brew services start mongodb-community` on macOS, `systemctl start mongod` on Linux).
+
+### Frontend shows "Proxy error: Could not proxy request"
+- The CRA dev server proxies to `http://127.0.0.1:5000` (set in `frontend/package.json`).
+- Make sure `PORT=5000` in your `.env`. If you change the port, update the `"proxy"` field in `frontend/package.json` to match.
+
+### PayPal button doesn't render / "Invalid client id"
+- Create a sandbox app at [developer.paypal.com](https://developer.paypal.com/developer/applications/) → Sandbox → Create App.
+- Copy the **Client ID** (not the secret) into `PAYPAL_CLIENT_ID` in `.env`.
+- PayPal SDK is loaded on the client side from the `/api/config/paypal` endpoint. If the variable is empty, the button won't appear.
+
+### `--openssl-legacy-provider` errors
+- CRA 3.x + Node 17+ requires the `--openssl-legacy-provider` flag. This is already set in `frontend/package.json` scripts. If you still get OpenSSL errors, use Node 16 LTS or verify the flag is present.
+
+### Image uploads fail silently
+- The `uploads/` directory must exist in the project root. Create it if missing: `mkdir -p uploads`.
+- Only `.jpg`, `.jpeg`, `.png` are accepted (checked by `uploadRoutes.js`).
+
+### Mongoose deprecation warnings
+- `useCreateIndex`, `useNewUrlParser`, `useUnifiedTopology` options in `config/db.js` are for Mongoose 5.x. If you upgrade to Mongoose 6+, remove these options (they are the defaults in v6).
+
+## Docker
+
+Run the entire stack with Docker Compose. All services use `.env` from the project root.
+
+```bash
+# Start all services (builds on first run)
+docker compose up -d
+
+# Seed the database (optional)
+docker compose exec backend node backend/seeder.js
+
+# Stop
+docker compose down
+
+# Stop and remove volumes (wipes DB)
+docker compose down -v
 ```
-Sample User Logins
 
-admin@example.com (Admin)
-123456
+Services:
+| Service | Port | Image / Build | Description |
+|---------|------|---------------|-------------|
+| `backend` | 5001→5000 | `Dockerfile` (root) | Express API server |
+| `frontend` | 3000 | `frontend/Dockerfile` | CRA dev server (proxies API to `backend:5000`) |
+| `mongo` | 27017 | `mongo:6` | MongoDB with persistent volume `mongo_data` |
+| `postgres` | 5432 | `pgvector/pgvector:pg17` | PostgreSQL + pgvector with persistent volume `postgres_data` |
+| `mcp-feature-flags` | — | `mcp-server-feature-flags/Dockerfile` | Feature flags MCP (stdio, profile: `mcp`) |
+| `mcp-search-docs` | — | `mcp-server-search-docs/Dockerfile` | Docs search MCP (stdio, profile: `mcp`) |
 
-john@example.com (Customer)
-123456
-
-jane@example.com (Customer)
-123456
+The MCP server containers are available under the `mcp` profile:
+```bash
+docker compose --profile mcp build
 ```
 
+> **Note:** In Docker mode, the frontend proxy points to `http://backend:5000` (Docker service name). For local non-Docker development, change the `"proxy"` field in `frontend/package.json` back to `http://127.0.0.1:5000`.
+
+## Feature Flags
+
+The project includes a file-backed feature flag system with 25 flags controlling search, cart, checkout, admin, reviews, and performance features.
+
+### REST API
+
+| Endpoint                   | Method | Description                                                               |
+|----------------------------|--------|---------------------------------------------------------------------------|
+| `/api/feature-flags`       | GET    | Returns all feature flags (reads `backend/features.json` on each request) |
+| `/api/feature-flags/:name` | GET    | Returns a single feature flag by key                                      |
+
+Both endpoints are public (no auth required). The backend reads the file on every request — no caching — so changes made by the MCP server are immediately visible.
+
+### Admin Dashboard
+
+An admin-only page at `/admin/features` displays all feature flags in a table:
+- **Name** — human-readable feature name
+- **Status** — Enabled / Disabled / Testing / Shadow (color-coded badge)
+- **Traffic %** — current rollout percentage
+- **Last Modified** — date of last change
+- **Dependencies** — other features this one depends on
+- **Description** — what the feature does
+
+Accessible via the **Admin → Features** dropdown in the header. Requires `isAdmin` user role.
+
+## MCP Servers
+
+The project includes two MCP (Model Context Protocol) servers, each with a focused responsibility following the "one server — one domain" principle.
+
+### MCP Server: Feature Flags (`mcp-server-feature-flags/`)
+
+Manages feature flags with dependency validation. Reads/writes `backend/features.json` — changes are immediately visible through the REST API without restarting the backend.
+
+| Tool                     | Description                                                    | Key Constraint                              |
+|--------------------------|----------------------------------------------------------------|---------------------------------------------|
+| `list_features`          | Returns summary of all features (key, name, status, traffic %) | Read-only                                   |
+| `get_feature_info`       | Returns full feature metadata + dependency states              | Read-only                                   |
+| `set_feature_state`      | Changes feature status (Enabled/Disabled/Testing/Shadow)       | Cannot enable if any dependency is Disabled |
+| `adjust_traffic_rollout` | Sets traffic percentage 0–100                                  | Cannot set >0 when feature is Disabled      |
+
+**Dependencies:** `@modelcontextprotocol/sdk`, `zod` (no external APIs needed).
+
+### MCP Server: Search Docs (`mcp-server-search-docs/`)
+
+Semantic search over the project documentation corpus (47 markdown files, 723 indexed chunks in pgvector).
+
+| Tool                  | Description                                                                     | Requirements                        |
+|-----------------------|---------------------------------------------------------------------------------|-------------------------------------|
+| `search_project_docs` | Vector similarity search; returns top-K chunks with source, headings, and score | `OPENAI_API_KEY` + PostgreSQL running |
+
+**Dependencies:** `@modelcontextprotocol/sdk`, `zod`, `openai`, `pg`, `dotenv`.
+
+### Setup
+
+```bash
+# Install and build both servers
+npm install --prefix mcp-server-feature-flags
+npm run build --prefix mcp-server-feature-flags
+
+npm install --prefix mcp-server-search-docs
+npm run build --prefix mcp-server-search-docs
+```
+
+### Connecting to GitHub Copilot CLI
+
+The project includes `.copilot/mcp.json` — Copilot CLI auto-discovers both servers when launched from the project root:
+
+```bash
+# Build both servers first
+npm run build --prefix mcp-server-feature-flags
+npm run build --prefix mcp-server-search-docs
+
+# Start Copilot CLI from the project root
+copilot
+
+# Verify with /mcp — should list "proshop-feature-flags" and "proshop-search-docs"
+```
+
+### Connecting to Claude Desktop
+
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "proshop-feature-flags": {
+      "command": "node",
+      "args": ["/absolute/path/to/proshop_mern/mcp-server-feature-flags/dist/index.js"]
+    },
+    "proshop-search-docs": {
+      "command": "node",
+      "args": ["/absolute/path/to/proshop_mern/mcp-server-search-docs/dist/index.js"],
+      "env": {
+        "OPENAI_API_KEY": "sk-..."
+      }
+    }
+  }
+}
+```
+
+## Vector Embeddings (pgvector)
+
+A RAG (Retrieval-Augmented Generation) pipeline that chunks project documentation from `docs/project-data/` (47 markdown files), embeds them with **OpenAI text-embedding-3-small** (1536 dimensions), and stores them in the pgvector PostgreSQL container for semantic search.
+
+### Scripts
+
+All scripts are in `scripts/` (Node.js, ES Modules, separate `package.json`):
+
+| Script              | Command                                 | Description                                                                |
+|---------------------|-----------------------------------------|----------------------------------------------------------------------------|
+| `chunk_markdown.js` | `node scripts/chunk_markdown.js`        | Splits 47 markdown files into 723 semantic chunks → `chunks.jsonl`         |
+| `embed_chunks.js`   | `node scripts/embed_chunks.js`          | Embeds chunks via OpenAI API and loads into pgvector                       |
+| `search_chunks.js`  | `node scripts/search_chunks.js "query"` | Semantic search with optional `--top_k`, `--source_file`, `--type` filters |
+
+### Setup
+
+1. Add your OpenAI API key to `.env`:
+   ```
+   OPENAI_API_KEY=sk-...
+   ```
+
+2. Install scripts dependencies:
+   ```bash
+   npm install --prefix scripts
+   ```
+
+3. Make sure PostgreSQL (pgvector) is running:
+   ```bash
+   docker compose up postgres -d
+   ```
+
+4. Chunk markdown files (optional — `chunks.jsonl` is already in the repo):
+   ```bash
+   node scripts/chunk_markdown.js
+   ```
+
+5. Run the embedding script:
+   ```bash
+   node scripts/embed_chunks.js
+   ```
+
+6. Search:
+   ```bash
+   node scripts/search_chunks.js "your query" --top_k 5
+   node scripts/search_chunks.js "query" --source_file incidents
+   node scripts/search_chunks.js "query" --type adr
+   ```
+
+This creates a `chunks` table with columns: `text`, `source_file`, `file_path`, `title`, `parent_headings`, `keywords`, `summary`, `language`, `embedding` (vector(1536)).
+
+### Querying
+
+```sql
+-- Similarity search example
+SELECT text, source_file, 1 - (embedding <=> '[...]'::vector) AS similarity
+FROM chunks
+ORDER BY embedding <=> '[...]'::vector
+LIMIT 5;
+```
+
+### Configuration
+
+| Variable            | Default   | Description              |
+|---------------------|-----------|--------------------------|
+| `OPENAI_API_KEY`    | —         | Required. OpenAI API key |
+| `POSTGRES_HOST`     | localhost | PostgreSQL host          |
+| `POSTGRES_PORT`     | 5432      | PostgreSQL port          |
+| `POSTGRES_DB`       | proshop   | Database name            |
+| `POSTGRES_USER`     | proshop   | Database user            |
+| `POSTGRES_PASSWORD` | proshop   | Database password        |
 
 ## License
 
-The MIT License
-
-Copyright (c) 2020 Traversy Media https://traversymedia.com
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+MIT — Copyright (c) 2020 Traversy Media.

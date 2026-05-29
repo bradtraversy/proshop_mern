@@ -1,0 +1,9 @@
+node_modules
+npm-debug.log
+frontend/node_modules
+frontend/build
+mcp-server/node_modules
+mcp-server/dist
+.git
+.env
+uploads

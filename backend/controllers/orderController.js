@@ -47,6 +47,17 @@ const getOrderById = asyncHandler(async (req, res) => {
   )
 
   if (order) {
+    // Authorization: an order may only be read by its owner or an admin.
+    // Non-owners get the same 404 as a missing order so we don't disclose
+    // that the id exists (prevents the IDOR enumeration).
+    const ownerId = order.user._id ? order.user._id : order.user
+    const isOwner = ownerId.toString() === req.user._id.toString()
+
+    if (!isOwner && !req.user.isAdmin) {
+      res.status(404)
+      throw new Error('Order not found')
+    }
+
     res.json(order)
   } else {
     res.status(404)
@@ -67,7 +78,7 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
       id: req.body.id,
       status: req.body.status,
       update_time: req.body.update_time,
-      email_address: req.body.payer.email_address,
+      email_address: req.body.payer && req.body.payer.email_address,
     }
 
     const updatedOrder = await order.save()
