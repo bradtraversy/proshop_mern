@@ -136,6 +136,7 @@ const Header = () => {
               <MenuItem to='/admin/productlist'>Products</MenuItem>
               <MenuItem to='/admin/orderlist'>Orders</MenuItem>
               <MenuItem to='/admin/featuredashboard'>Feature dashboard</MenuItem>
+              <MenuItem to='/admin/ai-router'>AI Router</MenuItem>
               {moderationEnabled && <MenuItem to='/admin/reviews'>Review queue</MenuItem>}
             </NavMenu>
           )}

@@ -329,6 +329,7 @@
           "userReducers.js": null
         },
         "screens/": {
+          "AIRouterDashboardScreen.js": null,
           "CartScreen.js": null,
           "FeatureFlagsScreen.js": null,
           "HomeScreen.js": null,
@@ -591,5 +592,5 @@
     "stryker.mcp-features.conf.cjs": null,
     "stryker.mcp-rag.conf.cjs": null
   },
-  "last_updated": "2026-06-05T19:34:13Z"
+  "last_updated": "2026-06-05T20:24:58Z"
 }

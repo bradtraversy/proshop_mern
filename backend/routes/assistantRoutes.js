@@ -1,6 +1,6 @@
 import express from 'express'
 import asyncHandler from 'express-async-handler'
-import { protect } from '../middleware/authMiddleware.js'
+import { protect, admin } from '../middleware/authMiddleware.js'
 import { classifyIntent } from '../services/intentClassifier.js'
 import { runToolLoop } from '../services/toolLoop.js'
 import ChatLog from '../models/chatLogModel.js'
@@ -189,6 +189,74 @@ router.post(
       toolsUsed: result.toolsUsed,
       route,
     })
+  })
+)
+
+// Admin-only: read recent ChatLog entries for AI Router Dashboard.
+const isLocalModel = (model) => {
+  if (!model) return false
+  const m = String(model).toLowerCase()
+  return m.includes('local') || m.startsWith('qwen') || m.startsWith('ollama')
+}
+
+router.get(
+  '/logs',
+  protect,
+  admin,
+  asyncHandler(async (req, res) => {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 200, 500)
+    const skip = Math.max(parseInt(req.query.skip, 10) || 0, 0)
+
+    const [items, total] = await Promise.all([
+      ChatLog.find({})
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('user', 'name email')
+        .lean(),
+      ChatLog.countDocuments({}),
+    ])
+
+    const logs = items.map((l) => {
+      const local = isLocalModel(l.model)
+      return {
+        _id: l._id,
+        createdAt: l.createdAt,
+        user: l.user
+          ? { _id: l.user._id, name: l.user.name, email: l.user.email }
+          : null,
+        message: l.message,
+        reply: l.reply,
+        piiEntityTypes: l.piiEntityTypes || [],
+        intentRoute: l.route, // personal | public
+        modelRoute: local ? 'local' : 'cloud',
+        model: l.model,
+        toolsUsed: l.toolsUsed || [],
+        latencyMs: l.latencyMs,
+        costUsd: local ? 0 : l.costUsd || 0,
+        status: l.status,
+        errorCode: l.errorCode,
+      }
+    })
+
+    const summary = logs.reduce(
+      (a, l) => {
+        a.total += 1
+        if (l.modelRoute === 'local') a.local += 1
+        else a.cloud += 1
+        a.totalCostUsd += l.costUsd || 0
+        return a
+      },
+      { total: 0, local: 0, cloud: 0, totalCostUsd: 0 }
+    )
+    // Crude savings estimate: assume each local call would have cost the
+    // mean cloud-call cost if it had gone to cloud instead.
+    const meanCloudCost =
+      summary.cloud > 0 ? summary.totalCostUsd / summary.cloud : 0
+    summary.estimatedSavingsUsd = +(summary.local * meanCloudCost).toFixed(4)
+    summary.totalCostUsd = +summary.totalCostUsd.toFixed(4)
+
+    res.json({ logs, summary, total, limit, skip })
   })
 )
 

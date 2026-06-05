@@ -21,6 +21,7 @@ import OrderListScreen from './screens/OrderListScreen'
 import { loadFeatureFlags } from './actions/featureFlagActions'
 import FeatureFlagsScreen from './screens/FeatureFlagsScreen'
 import ReviewModerationScreen from './screens/ReviewModerationScreen'
+import AIRouterDashboardScreen from './screens/AIRouterDashboardScreen'
 import MultiStepCheckoutScreen from './screens/MultiStepCheckoutScreen'
 import useFeatureEnabled from './hooks/useFeatureEnabled'
 import ChatWidget from './components/ChatWidget'
@@ -85,6 +86,7 @@ const App = () => {
           <Route path='/admin/orderlist' component={OrderListScreen} />
           <Route path='/admin/featuredashboard' component={FeatureFlagsScreen} />
           <Route path='/admin/reviews' component={ReviewModerationScreen} />
+          <Route path='/admin/ai-router' component={AIRouterDashboardScreen} />
           <Route path='/search/:keyword' component={HomeScreen} exact />
           <Route path='/page/:pageNumber' component={HomeScreen} exact />
           <Route
