@@ -74,6 +74,39 @@ services:
       - logs-server
     restart: unless-stopped
 
+  presidio-analyzer:
+    image: mcr.microsoft.com/presidio-analyzer:latest
+    ports:
+      - "5010:3000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  litellm:
+    build:
+      context: ./litellm
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-local-master}
+      - PRESIDIO_ANALYZER_URL=http://presidio-analyzer:3000
+      - PII_SCORE_THRESHOLD_HIGH=0.6
+      - ROUTE_PII_MODEL=qwen-local
+      - ROUTE_CLEAN_MODEL=claude-haiku
+      - ROUTE_DEFAULT_MODEL=qwen-local
+    depends_on:
+      presidio-analyzer:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend

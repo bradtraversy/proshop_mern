@@ -1,0 +1,25 @@
+model_list:
+  - model_name: qwen-local
+    litellm_params:
+      model: ollama_chat/qwen3:8b-q8_0
+      api_base: http://host.docker.internal:11434
+      think: false
+
+  - model_name: claude-haiku
+    litellm_params:
+      model: anthropic/claude-haiku-4-5-20251001
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+litellm_settings:
+  callbacks: pii_router.pii_router_instance
+  set_verbose: true
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+
+environment_variables:
+  PRESIDIO_ANALYZER_URL: http://presidio-analyzer:3000
+  PII_SCORE_THRESHOLD_HIGH: "0.6"
+  ROUTE_PII_MODEL: qwen-local
+  ROUTE_CLEAN_MODEL: claude-haiku
+  ROUTE_DEFAULT_MODEL: qwen-local
