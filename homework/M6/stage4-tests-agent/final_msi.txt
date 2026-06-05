@@ -1,0 +1,23 @@
+Stryker mutation testing — final MSI (after assertion strengthening)
+
+mcp-features/index.js
+  MSI:       93.23%   (unchanged — no strengthening needed)
+  Killed:    300 / 342
+
+mcp-rag (index.js + ingest.js)
+  MSI:       72.95%   ← target ≥70% reached
+  Mutants:   331 total
+  Killed:    239   (+114 vs starting)
+  Survived:  89    (-117 vs starting)
+  Timeout:   1
+  Error:     2
+  Duration:  7m 50s
+  Per-file:
+    index.js    87.80%   (108 killed / 15 survived / 125 covered)   +67.80 pp
+    ingest.js   64.08%   (131 killed / 74 survived / 206 covered)   +15.54 pp
+  Status:    Above 70% target.
+
+Delta:
+  mcp-rag combined MSI:  37.76% → 72.95%   (+35.19 pp)
+  index.js MSI:          20.00% → 87.80%   (+67.80 pp)
+  ingest.js MSI:         48.54% → 64.08%   (+15.54 pp)

@@ -11,8 +11,18 @@ const filePath = path.join(__dirname, '..', 'features.json')
 const router = express.Router()
 
 const VALID_STATUSES = ['Enabled', 'Testing', 'Disabled']
+const FEATURE_KEY_RE = /^[a-z][a-z0-9_-]{0,63}$/
+const CACHE_TTL_MS = 5000
+
+let cache = { value: null, expiresAt: 0 }
+
+const invalidateCache = () => { cache = { value: null, expiresAt: 0 } }
 
 const readFlags = async (res) => {
+  const now = Date.now()
+  if (cache.value && cache.expiresAt > now) {
+    return cache.value
+  }
   let raw
   try {
     raw = await readFile(filePath, 'utf-8')
@@ -23,12 +33,15 @@ const readFlags = async (res) => {
     }
     throw err
   }
+  let parsed
   try {
-    return JSON.parse(raw)
+    parsed = JSON.parse(raw)
   } catch {
     res.status(500)
     throw new Error('Feature flags file contains invalid JSON')
   }
+  cache = { value: parsed, expiresAt: now + CACHE_TTL_MS }
+  return parsed
 }
 
 router.get('/', asyncHandler(async (req, res) => {
@@ -40,8 +53,13 @@ router.patch('/:key', protect, admin, asyncHandler(async (req, res) => {
   const { key } = req.params
   const { status, traffic_percentage } = req.body
 
+  if (!FEATURE_KEY_RE.test(key)) {
+    res.status(400)
+    throw new Error('Invalid feature flag key')
+  }
+
   const data = await readFlags(res)
-  if (!data[key]) {
+  if (!Object.hasOwn(data, key)) {
     res.status(404)
     throw new Error(`Feature flag '${key}' not found`)
   }
@@ -77,6 +95,7 @@ router.patch('/:key', protect, admin, asyncHandler(async (req, res) => {
   const tmp = filePath + '.tmp'
   await writeFile(tmp, JSON.stringify(data, null, 2) + '\n', 'utf-8')
   await rename(tmp, filePath)
+  invalidateCache()
 
   res.json({ key, ...data[key] })
 }))

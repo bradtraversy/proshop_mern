@@ -15,25 +15,37 @@ import {
 } from '../controllers/productController.js'
 import { protect, admin, optionalProtect } from '../middleware/authMiddleware.js'
 import multer from 'multer'
+import crypto from 'crypto'
+
+const MIME_EXT = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+}
 
 const storage = multer.diskStorage({
   destination(req, file, cb) {
     cb(null, 'uploads/')
   },
   filename(req, file, cb) {
-    cb(null, `review-${Date.now()}-${file.originalname}`)
+    const ext = MIME_EXT[file.mimetype]
+    cb(null, `review-${crypto.randomUUID()}.${ext}`)
   },
 })
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
+  if (MIME_EXT[file.mimetype]) {
     cb(null, true)
   } else {
     cb(new Error('Images only'))
   }
 }
 
-const uploadReviewImages = multer({ storage, fileFilter }).array('images', 3)
+const uploadReviewImages = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 2 * 1024 * 1024, files: 3 },
+}).array('images', 3)
 
 router.route('/').get(getProducts).post(protect, admin, createProduct)
 router.get('/reviews', protect, admin, getPendingReviews)

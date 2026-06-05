@@ -1,0 +1,24 @@
+Stryker mutation testing — starting MSI (before assertion strengthening)
+
+mcp-features/index.js
+  MSI:       93.23%
+  Mutants:   342 total
+  Killed:    300
+  Survived:  22
+  Timeout:   3
+  Error:     17
+  Duration:  10m 02s
+  Status:    Above 70% target on first run; no strengthening required.
+
+mcp-rag (index.js + ingest.js)
+  MSI:       37.76%
+  Mutants:   331 total
+  Killed:    125
+  Survived:  206
+  Timeout:   0
+  Error:     0
+  Duration:  4m 12s
+  Per-file:
+    index.js    20.00%   (25 killed / 100 survived / 125 covered)
+    ingest.js   48.54%   (100 killed / 106 survived / 206 covered)
+  Status:    Below 70% target — escalated to test-writer-mate for strengthening.

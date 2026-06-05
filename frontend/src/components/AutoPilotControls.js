@@ -1,17 +1,30 @@
 import React, { useState } from 'react'
+import { useSelector } from 'react-redux'
 
 const AutoPilotControls = ({ feature, onUpdate, onClose }) => {
   const [loading, setLoading] = useState(null)
   const [feedback, setFeedback] = useState(null)
 
+  const userLogin = useSelector((state) => state.userLogin)
+  const { userInfo } = userLogin || {}
+
   const callAutoPilot = async (action, extras = {}) => {
     setLoading(action)
     setFeedback(null)
 
+    if (!userInfo || !userInfo.token) {
+      setFeedback({ type: 'danger', message: 'Not authorized — please log in as admin.' })
+      setLoading(null)
+      return
+    }
+
     try {
       const response = await fetch('/api/autopilot/feature-control', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${userInfo.token}`,
+        },
         body: JSON.stringify({
           feature_id: feature.key,
           action,
