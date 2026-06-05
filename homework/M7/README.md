@@ -5,6 +5,29 @@ ProShop AI ассистент. Виджет в правом нижнем угл�
 Ollama) и облачной (`claude-haiku-4-5` через Anthropic API) по принципу:
 **личные данные — локально, публичный каталог — в облако**.
 
+## Что выбрано
+
+- **Деплой локальной модели**: Ollama на хосте + `qwen3:8b-q8_0` (Q8, 8.2B, tools+thinking). Подробности и пример вызова из консоли — в [0-deploy.md](./0-deploy.md).
+- **Облачный провайдер**: Anthropic, `claude-haiku-4-5-20251001`. Ключ хранится только на сервере (LiteLLM-контейнер), браузер его не видит.
+- **Путь роутера**: один LiteLLM-прокси на `:4000` с алиасом `smart-router`. Pre-call callback (`pii_router.py`) обращается в Presidio Analyzer и переписывает `data["model"]` на физический бэкенд. Полная схема — в [router/architecture.md](./router/architecture.md); скрипты — в [router/](./router/).
+- **Аудит**: `ChatLog` в MongoDB + админ-страница `/admin/ai-router` (см. писменно в [writeup-dz1.md](./writeup-dz1.md), скрины в [demo/](./demo/)).
+
+## Как запустить
+
+```bash
+# 1) Локальная модель (на хосте — не в Docker)
+ollama serve &
+ollama pull qwen3:8b-q8_0
+
+# 2) Весь остальной стек в Docker (Mongo, backend, frontend, LiteLLM, Presidio)
+docker compose up -d
+
+# 3) Открыть http://localhost:3000, залогиниться, открыть чат-виджет.
+#    Админ-дашборд: http://localhost:3000/admin/ai-router
+```
+
+ENV: `ANTHROPIC_API_KEY`, `LITELLM_MASTER_KEY`, `JWT_SECRET`, `MONGO_URI` — см. `.env.example`. Деплой/проверка локальной модели — [0-deploy.md](./0-deploy.md). Разбор сделанного по коммитам — [writeup-dz1.md](./writeup-dz1.md).
+
 ## Архитектура (high-level)
 
 ```

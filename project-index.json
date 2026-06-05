@@ -477,7 +477,23 @@
         }
       },
       "M7/": {
-        "README.md": null
+        "demo/": {
+          "Screenshot 2026-06-06 at 00.04.44.png": null,
+          "Screenshot 2026-06-06 at 00.04.59.png": null,
+          "Screenshot 2026-06-06 at 00.05.10.png": null,
+          "Screenshot 2026-06-06 at 00.05.19.png": null,
+          "Screenshot 2026-06-06 at 00.05.28.png": null,
+          "Screenshot 2026-06-06 at 00.33.35.png": null
+        },
+        "router/": {
+          "architecture.md": null,
+          "config.yaml": null,
+          "Dockerfile": null,
+          "pii_router.py": null
+        },
+        "0-deploy.md": null,
+        "README.md": null,
+        "writeup-dz1.md": null
       },
       "report-M1-3.md": null
     },
@@ -592,5 +608,5 @@
     "stryker.mcp-features.conf.cjs": null,
     "stryker.mcp-rag.conf.cjs": null
   },
-  "last_updated": "2026-06-05T20:24:58Z"
+  "last_updated": "2026-06-05T20:41:46Z"
 }
