@@ -23,6 +23,7 @@ import FeatureFlagsScreen from './screens/FeatureFlagsScreen'
 import ReviewModerationScreen from './screens/ReviewModerationScreen'
 import MultiStepCheckoutScreen from './screens/MultiStepCheckoutScreen'
 import useFeatureEnabled from './hooks/useFeatureEnabled'
+import ChatWidget from './components/ChatWidget'
 import axios from 'axios'
 
 const App = () => {
@@ -94,6 +95,7 @@ const App = () => {
           <Route path='/' component={HomeScreen} exact />
         </div>
       </main>
+      <ChatWidget />
       <Footer />
     </Router>
   )

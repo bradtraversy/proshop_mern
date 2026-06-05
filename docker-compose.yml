@@ -29,6 +29,9 @@ services:
     env_file: .env
     environment:
       - MONGO_URI=mongodb://mongo:27017/proshop
+      - LITELLM_URL=http://litellm:4000
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:?LITELLM_MASTER_KEY must be set in .env}
+      - LITELLM_MODEL=smart-router
     volumes:
       - ./backend:/app/backend
       - ./package.json:/app/package.json
@@ -37,6 +40,8 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      litellm:
+        condition: service_started
     restart: unless-stopped
 
   mcp-features:
@@ -94,7 +99,7 @@ services:
       - "4000:4000"
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-local-master}
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:?LITELLM_MASTER_KEY must be set in .env}
       - PRESIDIO_ANALYZER_URL=http://presidio-analyzer:3000
       - PII_SCORE_THRESHOLD_HIGH=0.6
       - ROUTE_PII_MODEL=qwen-local

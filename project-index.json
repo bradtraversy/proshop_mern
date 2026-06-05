@@ -232,17 +232,24 @@
         "errorMiddleware.js": null
       },
       "models/": {
+        "chatLogModel.js": null,
         "orderModel.js": null,
         "productModel.js": null,
         "userModel.js": null
       },
       "routes/": {
+        "assistantRoutes.js": null,
         "autopilotRoutes.js": null,
         "featureFlagRoutes.js": null,
         "orderRoutes.js": null,
         "productRoutes.js": null,
         "uploadRoutes.js": null,
         "userRoutes.js": null
+      },
+      "services/": {
+        "intentClassifier.js": null,
+        "toolLoop.js": null,
+        "toolRegistry.js": null
       },
       "utils/": {
         "featureFlag.js": null,
@@ -284,6 +291,7 @@
         },
         "components/": {
           "AutoPilotControls.js": null,
+          "ChatWidget.js": null,
           "CheckoutStepperV2.js": null,
           "CheckoutSteps.js": null,
           "ConfirmModal.js": null,
@@ -341,6 +349,7 @@
           "UserListScreen.js": null
         },
         "styles/": {
+          "chat-widget.css": null,
           "components.css": null,
           "tokens.css": null
         },
@@ -466,6 +475,9 @@
           "test-writer-mate.md": null
         }
       },
+      "M7/": {
+        "README.md": null
+      },
       "report-M1-3.md": null
     },
     "litellm/": {
@@ -579,5 +591,5 @@
     "stryker.mcp-features.conf.cjs": null,
     "stryker.mcp-rag.conf.cjs": null
   },
-  "last_updated": "2026-06-05T18:24:00Z"
+  "last_updated": "2026-06-05T19:34:13Z"
 }

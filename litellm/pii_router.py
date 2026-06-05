@@ -6,7 +6,10 @@ Rules:
   - PII found with score >= HIGH    -> ROUTE_PII_MODEL (local Qwen)
   - No PII spans returned           -> ROUTE_CLEAN_MODEL (Claude Haiku)
   - Ambiguous (low-score spans)     -> ROUTE_DEFAULT_MODEL (local Qwen)
-  - Analyzer error/unreachable      -> ROUTE_DEFAULT_MODEL (fail-safe to local)
+  - Empty text / analyzer error     -> ROUTE_DEFAULT_MODEL (fail-safe to local)
+
+Analyzer always runs for non-empty input; no length-based fast path (a short
+string like "ssn 123-45-6789" must not bypass detection).
 
 Activated only when client sends `model: smart-router`. Other model names
 pass through untouched.
@@ -23,6 +26,16 @@ MODEL_PII = os.getenv("ROUTE_PII_MODEL", "qwen-local")
 MODEL_CLEAN = os.getenv("ROUTE_CLEAN_MODEL", "claude-haiku")
 MODEL_DEFAULT = os.getenv("ROUTE_DEFAULT_MODEL", "qwen-local")
 ROUTER_ALIAS = "smart-router"
+
+PERSON_NON_LATIN_MIN_SCORE = float(os.getenv("PII_PERSON_NON_LATIN_MIN_SCORE", "0.95"))
+LOG_CONTENT = os.getenv("PII_LOG_CONTENT", "0") == "1"
+
+
+def _has_non_latin(text: str) -> bool:
+    for ch in text:
+        if ch.isalpha() and not ("a" <= ch.lower() <= "z"):
+            return True
+    return False
 
 SENSITIVE_ENTITIES = {
     "CREDIT_CARD", "CRYPTO", "EMAIL_ADDRESS", "IBAN_CODE",
@@ -58,8 +71,19 @@ async def _analyze(text: str) -> list:
         return r.json()
 
 
-def _decide(spans: list) -> str:
-    sensitive = [s for s in spans if s.get("entity_type") in SENSITIVE_ENTITIES]
+def _decide(spans: list, non_latin: bool) -> str:
+    # PERSON on en-NLP false-fires on non-Latin scripts (e.g. Cyrillic). Apply
+    # an elevated score floor ONLY when the input is non-Latin; for Latin text
+    # we trust the analyzer at the normal threshold.
+    sensitive = []
+    for s in spans:
+        etype = s.get("entity_type")
+        if etype not in SENSITIVE_ENTITIES:
+            continue
+        score = s.get("score", 0)
+        if etype == "PERSON" and non_latin and score < PERSON_NON_LATIN_MIN_SCORE:
+            continue
+        sensitive.append(s)
     if not sensitive:
         return MODEL_CLEAN
     if any(s.get("score", 0) >= SCORE_HIGH for s in sensitive):
@@ -83,16 +107,49 @@ class PIIRouter(CustomLogger):
         text = _extract_text(data.get("messages"))
         if not text:
             data["model"] = MODEL_DEFAULT
+            data.setdefault("metadata", {})["pii_routed_to"] = MODEL_DEFAULT
+            data["metadata"]["pii_reason"] = "empty_text"
+            print(f"[pii_router] empty text -> {MODEL_DEFAULT}")
             return data
+        non_latin = _has_non_latin(text)
         try:
             spans = await _analyze(text)
-            chosen = _decide(spans)
+            chosen = _decide(spans, non_latin)
+            reason = (
+                "no_spans" if not spans
+                else f"high_score:{','.join(sorted({s.get('entity_type','?') for s in spans if s.get('score',0)>=SCORE_HIGH}))}"
+                if chosen == MODEL_PII
+                else f"low_score:{','.join(sorted({s.get('entity_type','?') for s in spans}))}"
+            )
         except Exception as e:
-            print(f"[pii_router] analyzer error: {e}; falling back to {MODEL_DEFAULT}")
+            print(f"[pii_router] analyzer error: {e}; fallback to {MODEL_DEFAULT}")
             chosen = MODEL_DEFAULT
+            reason = f"analyzer_error:{type(e).__name__}"
         data["model"] = chosen
-        data.setdefault("metadata", {})["pii_routed_to"] = chosen
+        meta = data.setdefault("metadata", {})
+        meta["pii_routed_to"] = chosen
+        meta["pii_reason"] = reason
+        log_line = f"[pii_router] routed_to={chosen} reason={reason} len={len(text)}"
+        if LOG_CONTENT:
+            # Opt-in debug only. Never enable in prod — leaks PII to stdout/log aggregator.
+            preview = text[:60].replace("\n", " ")
+            log_line += f" text='{preview}'"
+        print(log_line)
         return data
+
+    async def async_post_call_success_hook(
+        self,
+        data: dict,
+        user_api_key_dict: UserAPIKeyAuth,
+        response,
+    ):
+        chosen = (data or {}).get("metadata", {}).get("pii_routed_to")
+        if chosen:
+            try:
+                response.model = chosen
+            except Exception as e:
+                print(f"[pii_router] failed to stamp response.model: {e}")
+        return response
 
 
 pii_router_instance = PIIRouter()
