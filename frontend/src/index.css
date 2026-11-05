@@ -6,9 +6,18 @@ h3 {
   padding: 1rem 0;
 }
 
-h1 {
+.home-screen {
+  width: 90%;
+  max-width: 1140px;
+  margin: 0 auto;
+}
+
+.section-title {
   font-size: 1.8rem;
-  padding: 1rem 0;
+  padding: 0.5rem 0;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 h2 {
@@ -20,34 +29,83 @@ h2 {
   margin: 0.1rem;
 }
 
-/* carousel */
-.carousel-item-next,
-.carousel-item-prev,
-.carousel-item.active {
+.product-carousel .carousel-item-next,
+.product-carousel .carousel-item-prev,
+.product-carousel .carousel-item.active {
   display: flex;
+  height: 292px;
 }
-.carousel-caption {
+
+.product-carousel .carousel-caption {
   position: absolute;
-  top: 0;
+  top: 12px;
+  bottom: auto;
 }
 
-.carousel-caption h2 {
+.product-carousel .carousel-caption h2 {
   color: #fff;
+  font-size: 1.15rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.carousel img {
-  height: 300px;
-  padding: 30px;
-  margin: 40px;
+.product-carousel img {
+  height: 240px;
+  max-width: 70%;
+  padding: 12px;
+  margin: 48px auto 0;
+  object-fit: contain;
   border-radius: 50%;
-  margin-left: auto;
-  margin-right: auto;
 }
-.carousel a {
+
+.product-carousel a {
   margin: 0 auto;
 }
-@media (max-width: 900px) {
-  .carousel-caption h2 {
-    font-size: 2.5vw;
+
+.product-card {
+  height: calc(100% - 1rem);
+  border-radius: 4px;
+}
+
+.product-card-image {
+  height: 170px;
+  padding: 8px;
+  background-color: #f5f5f4;
+  object-fit: contain;
+}
+
+.product-card .card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card .card-title {
+  min-height: 2.8em;
+  font-size: 0.95rem;
+}
+
+.product-card h3 {
+  margin-top: auto;
+}
+
+@media (max-width: 767px) {
+  .home-screen {
+    width: 100%;
+  }
+
+  .product-carousel .carousel-item-next,
+  .product-carousel .carousel-item-prev,
+  .product-carousel .carousel-item.active {
+    height: 240px;
+  }
+
+  .product-carousel img {
+    height: 190px;
+    max-width: 76%;
+    margin-top: 42px;
+  }
+
+  .product-carousel .carousel-caption h2 {
+    font-size: 0.9rem;
   }
 }
